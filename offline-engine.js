@@ -28,7 +28,9 @@
     { id: 'img3', type: 'image', index: 3, url: './images/3.png', label: '3. Tejo Comic Image' },
     { id: 'img4', type: 'image', index: 4, url: './images/4.png', label: '4. Kapot Comic Image' },
     { id: 'img5', type: 'image', index: 5, url: './images/5.png', label: '5. Neel Comic Image' },
-    { id: 'img6', type: 'image', index: 6, url: './images/6.png', label: '6. Krishna Comic Image' }
+    { id: 'img6', type: 'image', index: 6, url: './images/6.png', label: '6. Krishna Comic Image' },
+    { id: 'audio-intro1', type: 'audio', index: 1, url: './audioIntro1.mp4', label: 'Anger Analogy Voice Narration' },
+    { id: 'audio-soothing', type: 'audio', index: 2, url: './soothingMusic.mp4', label: 'Soothing Background Music' }
   ];
 
   let dbInstance = null;

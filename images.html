@@ -1766,6 +1766,54 @@
       box-shadow: 0 0 8px rgba(56, 189, 248, 0.45);
     }
 
+    /* Small Icon-Only Mute Button on Bottom-Left for Stereo VR */
+    #stereo-mute-btn {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto;
+      background: rgba(15, 23, 42, 0.78);
+      border: 1px solid rgba(56, 189, 248, 0.45);
+      color: #38bdf8;
+      border-radius: 50%;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 1000;
+    }
+
+    #stereo-mute-btn:hover {
+      background: rgba(56, 189, 248, 0.25);
+      border-color: #38bdf8;
+      color: #ffffff;
+      transform: scale(1.08);
+      box-shadow: 0 6px 20px rgba(56, 189, 248, 0.4);
+    }
+
+    #stereo-mute-btn:active {
+      transform: scale(0.92);
+    }
+
+    #stereo-mute-btn.is-muted {
+      background: rgba(220, 38, 38, 0.88);
+      border-color: #f87171;
+      color: #ffffff;
+    }
+
+    #stereo-mute-btn.is-muted:hover {
+      background: #dc2626;
+      border-color: #ef4444;
+      box-shadow: 0 6px 20px rgba(220, 38, 38, 0.45);
+    }
+
     /* Small Icon-Only Close Button on Bottom-Right */
     #exit-stereo-btn {
       position: absolute;
@@ -1823,14 +1871,6 @@
     body.stereo-vr-active #focus-info-card,
     body.stereo-vr-active #mobile-hint,
     body.stereo-vr-active #ssl-notice,
-    #hud-left-logo,
-    #hud-event-logo,
-    #hud-toolbar,
-    #hud-bottom-dock,
-    #hud-bottom-restart-btn,
-    #hud-bottom-switch-btn,
-    #focus-info-card,
-    #mobile-hint,
     .a-enter-vr {
       display: none !important;
     }
@@ -1838,12 +1878,18 @@
 </head>
 
 <body>
+  <!-- Anger Analogy Audio Elements:
+       1. Image Background Sound: audioIntro1.mp4 (plays for each image in Anger Analogy)
+       2. Soft & Soothing Background Music: soothingMusic.mp4 (gentle ambient meditation soundtrack) -->
+  <audio id="leshya-image-audio" src="./audioIntro1.mp4" preload="auto" playsinline webkit-playsinline></audio>
+  <audio id="leshya-soothing-bgm" src="./soothingMusic.mp4" preload="auto" loop playsinline webkit-playsinline></audio>
+
   <!-- Dual-Eye Stereo Split-Screen Frame Overlay (Left Eye & Right Eye Squares for VR Headsets) -->
   <div id="vr-stereo-overlay">
     <div class="vr-eye-frame" id="vr-eye-left"></div>
     <div class="vr-eye-frame" id="vr-eye-right"></div>
     <div id="vr-center-divider"></div>
-    <button id="stereo-mute-btn" title="Mute / Unmute Tone (M key)" aria-label="Mute or unmute tone">
+    <button id="stereo-mute-btn" title="Mute / Unmute Audio (M key)" aria-label="Mute or unmute audio">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
         <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
@@ -1869,6 +1915,9 @@
     <a href="./index.html" class="fs-toggle-btn" style="text-decoration:none; color:#f8fafc;" title="Switch to 6 Video VR Theater" aria-label="6 Video VR Theater">
       <span style="font-size: 18px;">🎬</span>
     </a>
+    <button id="hud-audio-btn" class="fs-toggle-btn" type="button" title="Mute / Unmute Audio (M)" aria-label="Toggle Audio">
+      <span id="hud-audio-icon" style="font-size: 18px;">🔊</span>
+    </button>
     <button id="hud-fullscreen-btn" class="fs-toggle-btn" type="button" title="Full Screen (F)" aria-label="Toggle Fullscreen">
       <svg class="fs-icon-enter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M8 3H5a2 2 0 0 0-2 2v3"></path>
@@ -1908,6 +1957,10 @@
       <div id="focus-desc-text" class="focus-sub">Pure Equanimity · समता व शांति · Purity · Detachment · Peace</div>
     </div>
     <div class="focus-actions">
+      <button id="audio-replay-btn" class="inspect-btn" type="button" title="Play / Replay Sound (P)" style="margin-right: 6px;">
+        <span id="audio-replay-icon">🔊</span>
+        <span>Sound</span>
+      </button>
       <button id="inspect-trigger-btn" class="inspect-btn" type="button" title="Inspect Comic (Space)">
         <span>🔍</span>
         <span>Inspect</span>
@@ -2277,7 +2330,8 @@
           icon: "⚪",
           keywords: "Purity · Detachment · Peace",
           comicStory: "Bumped into on the street — walks calmly with complete peace. \"That person is so calm!\"",
-          imageSrc: "./images/1.png"
+          imageSrc: "./images/1.png",
+          audioSrc: "./audioIntro1.mp4"
         },
         {
           id: 2,
@@ -2292,7 +2346,8 @@
           icon: "🟡",
           keywords: "Forgiveness · Kindness · Devotion",
           comicStory: "Bumped into on the street — smiles with open hands: \"No problem, are you hurt?\"",
-          imageSrc: "./images/2.png"
+          imageSrc: "./images/2.png",
+          audioSrc: "./audioIntro1.mp4"
         },
         {
           id: 3,
@@ -2307,7 +2362,8 @@
           icon: "🔴",
           keywords: "Self-Control · Righteousness · Energy",
           comicStory: "Bumped into on the street — firm and righteous: \"No problem, just please be careful next time.\"",
-          imageSrc: "./images/3.png"
+          imageSrc: "./images/3.png",
+          audioSrc: "./audioIntro1.mp4"
         },
         {
           id: 4,
@@ -2322,7 +2378,8 @@
           icon: "🔘",
           keywords: "Brooding · Suspicion · Cynicism",
           comicStory: "Bumped into on the street — furious reaction: grabs shirt, points finger angrily, storms off brooding.",
-          imageSrc: "./images/4.png"
+          imageSrc: "./images/4.png",
+          audioSrc: "./audioIntro1.mp4"
         },
         {
           id: 5,
@@ -2337,7 +2394,8 @@
           icon: "🔵",
           keywords: "Sloth · Deceit · Jealousy",
           comicStory: "Bumped into on the street — violent escalation: punches the innocent person down to the pavement.",
-          imageSrc: "./images/5.png"
+          imageSrc: "./images/5.png",
+          audioSrc: "./audioIntro1.mp4"
         },
         {
           id: 6,
@@ -2352,7 +2410,8 @@
           icon: "⚫",
           keywords: "Anger · Cruelty · Malice",
           comicStory: "Bumped into on the street — deadly malice: stabs the passerby with lethal demonic wrath.",
-          imageSrc: "./images/6.png"
+          imageSrc: "./images/6.png",
+          audioSrc: "./audioIntro1.mp4"
         }
       ];
 
@@ -2363,6 +2422,211 @@
       let screens = [];
       let experienceStarted = false;
       const textures = [];
+
+      // --- Audio Engine (Anger Analogy: Voice Narration & Soft Soothing BGM) ---
+      let audioMuted = false;
+      let activeImageAudioIndex = -1;
+      let gazeAudioTimer = null;
+      let lastGazeAudioTarget = -1;
+      const GAZE_AUDIO_DWELL_MS = 400; // 400ms steady dwell to avoid stutter during head turns
+      let proceduralBgmActive = false;
+      let proceduralBgmGain = null;
+      let proceduralOscillators = [];
+
+      function getImageAudioElement() {
+        return document.querySelector("#leshya-image-audio");
+      }
+
+      function getBgmAudioElement() {
+        return document.querySelector("#leshya-soothing-bgm");
+      }
+
+      // Initialize / Start Audio Experience (unlocked on user gesture)
+      function startAudioExperience() {
+        playSoothingBgm();
+        if (focusedScreenIndex >= 0) {
+          playImageAudio(focusedScreenIndex, true);
+        }
+      }
+
+      // Start Soothing Background Music (loops continuously at gentle soft volume)
+      function playSoothingBgm() {
+        const bgm = getBgmAudioElement();
+        if (!bgm) return;
+        bgm.loop = true;
+        bgm.muted = audioMuted;
+        bgm.volume = (activeImageAudioIndex >= 0 && !getImageAudioElement()?.paused) ? 0.14 : 0.22;
+
+        const p = bgm.play();
+        if (p !== undefined) {
+          p.catch((err) => {
+            console.warn("BGM playback pending interaction:", err);
+            startProceduralSoothingBgm();
+          });
+        }
+      }
+
+      // Web Audio Procedural Soothing Meditation Music (Resilient Fallback)
+      function startProceduralSoothingBgm() {
+        if (proceduralBgmActive || audioMuted) return;
+        try {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContextClass) return;
+          if (!audioCtx) audioCtx = new AudioContextClass();
+          if (audioCtx.state === "suspended") audioCtx.resume().catch(() => {});
+
+          const masterGain = audioCtx.createGain();
+          masterGain.gain.setValueAtTime(0.04, audioCtx.currentTime); // Soft background level
+          masterGain.connect(audioCtx.destination);
+          proceduralBgmGain = masterGain;
+
+          // Soothing F-major meditation chord (F3, A3, C4, E4)
+          const chordFreqs = [174.61, 220.00, 261.63, 329.63];
+          proceduralOscillators = chordFreqs.map((freq, idx) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.22 / (idx + 1), audioCtx.currentTime);
+            osc.connect(gain);
+            gain.connect(masterGain);
+            osc.start();
+            return osc;
+          });
+          proceduralBgmActive = true;
+        } catch (e) {
+          console.warn("Procedural BGM error:", e);
+        }
+      }
+
+      function stopProceduralSoothingBgm() {
+        if (!proceduralBgmActive) return;
+        try {
+          proceduralOscillators.forEach(osc => {
+            try { osc.stop(); osc.disconnect(); } catch (e) {}
+          });
+          proceduralOscillators = [];
+          if (proceduralBgmGain) {
+            proceduralBgmGain.disconnect();
+            proceduralBgmGain = null;
+          }
+        } catch (e) {}
+        proceduralBgmActive = false;
+      }
+
+      // Play Sound for a Specific Image Screen (always restarts from 0:00 for each image)
+      function playImageAudio(screenIdx, forceRestart = false) {
+        if (screenIdx < 0 || screenIdx >= NUM_SCREENS) return;
+        const imgAudio = getImageAudioElement();
+        const bgm = getBgmAudioElement();
+        if (!imgAudio) return;
+
+        const isSwitch = (activeImageAudioIndex !== screenIdx) || forceRestart;
+        activeImageAudioIndex = screenIdx;
+
+        const meta = SCREEN_METADATA[screenIdx];
+        const audioPath = (window.LeshyaOfflineEngine && window.LeshyaOfflineEngine.getBlobUrl(meta.audioSrc)) || meta.audioSrc || "./audioIntro1.mp4";
+
+        if (imgAudio.getAttribute("data-src") !== audioPath) {
+          imgAudio.setAttribute("data-src", audioPath);
+          imgAudio.src = audioPath;
+        }
+
+        if (isSwitch) {
+          try {
+            imgAudio.currentTime = 0;
+          } catch (e) {}
+        }
+
+        imgAudio.muted = audioMuted;
+        imgAudio.volume = 0.92; // Clear foreground sound for the image
+
+        // Soften background music while image narration / sound plays
+        if (bgm && !audioMuted) {
+          bgm.volume = 0.12;
+        }
+
+        if (!audioMuted) {
+          const p = imgAudio.play();
+          if (p !== undefined) {
+            p.catch((err) => {
+              console.warn("Image audio playback blocked:", err);
+            });
+          }
+        }
+
+        updateAudioUI();
+      }
+
+      // Schedule smooth gaze audio switch (prevents rapid audio glitching during head turns)
+      function scheduleGazeImageAudio(screenIdx) {
+        if (screenIdx < 0 || screenIdx >= NUM_SCREENS) return;
+        if (screenIdx === activeImageAudioIndex && !getImageAudioElement()?.paused) return;
+
+        if (lastGazeAudioTarget !== screenIdx) {
+          lastGazeAudioTarget = screenIdx;
+          if (gazeAudioTimer) {
+            clearTimeout(gazeAudioTimer);
+            gazeAudioTimer = null;
+          }
+          gazeAudioTimer = setTimeout(() => {
+            if (focusedScreenIndex === screenIdx && experienceStarted) {
+              playImageAudio(screenIdx, true);
+            }
+          }, GAZE_AUDIO_DWELL_MS);
+        }
+      }
+
+      // Toggle Mute / Unmute
+      function toggleAudioMute() {
+        audioMuted = !audioMuted;
+        const imgAudio = getImageAudioElement();
+        const bgm = getBgmAudioElement();
+
+        if (imgAudio) {
+          imgAudio.muted = audioMuted;
+          if (!audioMuted && imgAudio.paused && experienceStarted && activeImageAudioIndex >= 0) {
+            imgAudio.play().catch(() => {});
+          }
+        }
+
+        if (bgm) {
+          bgm.muted = audioMuted;
+          if (!audioMuted && bgm.paused && experienceStarted) {
+            bgm.play().catch(() => {});
+          }
+        }
+
+        if (proceduralBgmGain && audioCtx) {
+          proceduralBgmGain.gain.setValueAtTime(audioMuted ? 0 : 0.04, audioCtx.currentTime);
+        }
+
+        updateAudioUI();
+        showFsToast(audioMuted ? "🔇 Audio Muted" : "🔊 Audio Unmuted");
+      }
+
+      // Sync Audio UI across 2D HUD and VR Stereo HUD
+      function updateAudioUI() {
+        const hudAudioBtn = document.querySelector("#hud-audio-btn");
+        const hudAudioIcon = document.querySelector("#hud-audio-icon");
+        const stereoMuteBtn = document.querySelector("#stereo-mute-btn");
+        const replayIcon = document.querySelector("#audio-replay-icon");
+
+        if (hudAudioIcon) {
+          hudAudioIcon.textContent = audioMuted ? "🔇" : "🔊";
+        }
+        if (hudAudioBtn) {
+          hudAudioBtn.title = audioMuted ? "Unmute Audio (M)" : "Mute Audio (M)";
+          hudAudioBtn.classList.toggle("is-muted", audioMuted);
+        }
+        if (stereoMuteBtn) {
+          stereoMuteBtn.classList.toggle("is-muted", audioMuted);
+          stereoMuteBtn.title = audioMuted ? "Unmute Audio (M)" : "Mute Audio (M)";
+        }
+        if (replayIcon) {
+          replayIcon.textContent = audioMuted ? "🔇" : "🔊";
+        }
+      }
 
       // Check Secure Context
       function checkSecureContext() {
@@ -2992,7 +3256,7 @@
           }
         }
 
-        handleScreenFocus(screenIdx);
+        handleScreenFocus(screenIdx, true);
       }
 
       // Smooth Layout Transition (360 Ring <-> 180 Arc)
@@ -3044,7 +3308,7 @@
       }
 
       // Handle Screen Focus / Gaze Selection
-      function handleScreenFocus(index) {
+      function handleScreenFocus(index, immediateAudio = false) {
         if (index < 0 || index >= NUM_SCREENS) return;
         const prevIndex = focusedScreenIndex;
         focusedScreenIndex = index;
@@ -3075,6 +3339,19 @@
 
         // Play gentle harmonic tone for this Leshya
         playHarmonicChime(index);
+
+        // Manage Audio Playback for this Image (audioIntro1.mp4)
+        if (immediateAudio) {
+          if (gazeAudioTimer) {
+            clearTimeout(gazeAudioTimer);
+            gazeAudioTimer = null;
+          }
+          if (experienceStarted) {
+            playImageAudio(index, true);
+          }
+        } else {
+          scheduleGazeImageAudio(index);
+        }
       }
 
       // Procedural Web Audio Harmonic Tone for Soul Atmosphere
@@ -3568,6 +3845,10 @@
           modal.classList.remove("hidden");
         }
         drawNadirCanvas(0.0, null, false, null);
+        const imgAudio = getImageAudioElement();
+        if (imgAudio && !imgAudio.paused) {
+          imgAudio.pause();
+        }
       }
 
       function closeRestartModal() {
@@ -3577,6 +3858,12 @@
           modal.classList.add("hidden");
         }
         drawNadirCanvas(0.0, null, false, null);
+        if (experienceStarted && !audioMuted && activeImageAudioIndex >= 0) {
+          const imgAudio = getImageAudioElement();
+          if (imgAudio && imgAudio.paused) {
+            imgAudio.play().catch(() => {});
+          }
+        }
       }
 
       function selectStory(storyKey) {
@@ -3590,6 +3877,9 @@
 
       function loadHungerStory() {
         playRestartChime();
+        if (getImageAudioElement()) getImageAudioElement().pause();
+        if (getBgmAudioElement()) getBgmAudioElement().pause();
+        stopProceduralSoothingBgm();
         drawNadirCanvas(1.0, null, true, "hunger");
         showFsToast("🍲 Loading 1: Hunger Story (Tree Parable in VR)...");
 
@@ -3605,7 +3895,8 @@
       function loadAngerStory() {
         playRestartChime();
         rotateCameraToScreen(0);
-        handleScreenFocus(0);
+        handleScreenFocus(0, true);
+        playSoothingBgm();
 
         drawNadirCanvas(1.0, null, true, "anger");
         showFsToast("🔥 2: Anger Story (Street Parable) reloaded · Shukla Leshya (1) focused");
@@ -3758,7 +4049,7 @@
           }
 
           if (bestIdx >= 0 && maxDot > 0.50 && bestIdx !== focusedScreenIndex) {
-            handleScreenFocus(bestIdx);
+            handleScreenFocus(bestIdx, false);
           }
         }
 
@@ -3808,6 +4099,13 @@
         if (desc) desc.textContent = meta.comicStory;
 
         if (modal) modal.classList.add("active");
+
+        // Sync focus and play image sound
+        if (index !== focusedScreenIndex) {
+          handleScreenFocus(index, true);
+        } else {
+          playImageAudio(index, false);
+        }
       }
 
       function closeInspectModal() {
@@ -3929,6 +4227,9 @@
           }
 
           experienceStarted = false;
+          if (getImageAudioElement()) getImageAudioElement().pause();
+          if (getBgmAudioElement()) getBgmAudioElement().pause();
+          stopProceduralSoothingBgm();
 
           const startOverlay = document.querySelector("#start-overlay");
           if (startOverlay) {
@@ -3977,7 +4278,8 @@
         enterStereoVR();
 
         experienceStarted = true;
-        handleScreenFocus(0);
+        handleScreenFocus(0, true);
+        startAudioExperience();
       }
 
       // Camera Rotation Helper
@@ -4235,6 +4537,7 @@
 
         const enterExperience = async () => {
           requestDeviceSensors();
+          startAudioExperience();
           if (startOverlay) startOverlay.classList.add("hidden");
           const sceneEl = document.querySelector("a-scene");
           if (!sceneEl || !sceneEl.hasLoaded) {
@@ -4242,12 +4545,14 @@
             if (sceneEl) {
               sceneEl.addEventListener("loaded", () => {
                 experienceStarted = true;
-                handleScreenFocus(0);
+                handleScreenFocus(0, true);
+                startAudioExperience();
               }, { once: true });
             }
           } else {
             experienceStarted = true;
-            handleScreenFocus(0);
+            handleScreenFocus(0, true);
+            startAudioExperience();
           }
         };
 
@@ -4302,10 +4607,21 @@
         document.addEventListener("fullscreenchange", () => updateFullscreenUI(!!document.fullscreenElement));
         document.addEventListener("webkitfullscreenchange", () => updateFullscreenUI(!!document.webkitFullscreenElement));
 
-        // Stereo Overlay Buttons (for Dual-Eye Mobile VR Mode)
-        document.querySelector("#stereo-mute-btn")?.addEventListener("click", () => {
-          playHarmonicChime(focusedScreenIndex);
+        // Audio Toggle Buttons (Stereo VR Overlay + 2D Top-Right HUD + Info Card Sound Replay)
+        document.querySelector("#stereo-mute-btn")?.addEventListener("click", toggleAudioMute);
+        document.querySelector("#hud-audio-btn")?.addEventListener("click", toggleAudioMute);
+        document.querySelector("#audio-replay-btn")?.addEventListener("click", () => {
+          playImageAudio(focusedScreenIndex, true);
         });
+
+        // Set up audio completion listener to restore background music volume
+        getImageAudioElement()?.addEventListener("ended", () => {
+          const bgm = getBgmAudioElement();
+          if (bgm && !audioMuted) {
+            bgm.volume = 0.22;
+          }
+        });
+
         document.querySelector("#exit-stereo-btn")?.addEventListener("click", exitStereoVR);
 
         if (layoutBtn) {
@@ -4431,6 +4747,10 @@
             } else {
               launchVR();
             }
+          } else if (key === "m") {
+            toggleAudioMute();
+          } else if (key === "p") {
+            playImageAudio(focusedScreenIndex, true);
           } else if (key === " " || e.code === "Space") {
             e.preventDefault();
             openInspectModal(focusedScreenIndex);
@@ -4439,6 +4759,21 @@
             rotateCameraToScreen(idx);
           }
         });
+
+        // User gesture audio unlock for mobile Safari, Quest Browser & Chrome
+        const unlockAudioOnGesture = () => {
+          if (experienceStarted && !audioMuted) {
+            const bgm = getBgmAudioElement();
+            const imgAudio = getImageAudioElement();
+            if (bgm && bgm.paused) bgm.play().catch(() => {});
+            if (imgAudio && imgAudio.paused && activeImageAudioIndex >= 0) imgAudio.play().catch(() => {});
+          }
+          if (audioCtx && audioCtx.state === "suspended") {
+            audioCtx.resume().catch(() => {});
+          }
+        };
+        window.addEventListener("click", unlockAudioOnGesture);
+        window.addEventListener("touchstart", unlockAudioOnGesture);
 
         window.addEventListener("keyup", (e) => {
           if (pressedArrowKeys.has(e.key)) {

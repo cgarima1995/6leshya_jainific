@@ -15,6 +15,7 @@ videos/old/
 # Temporary files
 temp_*
 *.wav
+*.m4a
 
 # Git metadata
 .git

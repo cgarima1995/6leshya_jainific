@@ -3,7 +3,7 @@
  * Provides resilient offline caching and HTTP 206 Partial Content synthesis for video playback.
  */
 
-const CACHE_NAME = 'leshya-vr-cache-v3';
+const CACHE_NAME = 'leshya-vr-cache-v4';
 
 const CORE_ASSETS = [
   './',
@@ -14,7 +14,9 @@ const CORE_ASSETS = [
   './offline-engine.js',
   './dot-logo.png',
   './jainific-logo.png',
-  './manifest.json'
+  './manifest.json',
+  './audioIntro1.mp4',
+  './soothingMusic.mp4'
 ];
 
 // Install: Cache all core application shell files immediately
