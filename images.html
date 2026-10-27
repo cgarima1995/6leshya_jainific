@@ -1,0 +1,4491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>6 Leshya Images VR Gallery</title>
+  
+  <!-- PWA Manifest & Offline Engine -->
+  <link rel="manifest" href="./manifest.json" />
+  <meta name="theme-color" content="#030712" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <link rel="apple-touch-icon" href="./dot-logo.png" />
+  <script src="./offline-engine.js"></script>
+
+  <!-- WebXR Polyfill for Mobile Phone VR & Google Cardboard Stereo -->
+  <script src="./webxr-polyfill.min.js"></script>
+  <script>
+    if (typeof WebXRPolyfill !== 'undefined') {
+      try {
+        window.webxrPolyfill = new WebXRPolyfill({ cardboardMode: true });
+        console.log("WebXR Polyfill active for mobile VR.");
+      } catch (e) {
+        console.warn("WebXR Polyfill initialization:", e);
+      }
+    }
+  </script>
+
+  <!-- A-Frame WebXR Engine v1.5.0 (Loaded Locally for 100% Offline & Fast Delivery) -->
+  <script src="./aframe.min.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    html, body {
+      background-color: #030712;
+      color: #f3f4f6;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+      touch-action: none !important;
+      -webkit-touch-callout: none !important;
+      overscroll-behavior: none !important;
+    }
+
+    canvas, a-scene, .a-canvas {
+      touch-action: none !important;
+    }
+
+    /* Secure Context (HTTPS) Notice Banner */
+    #ssl-notice {
+      position: fixed;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10000;
+      background: rgba(220, 38, 38, 0.9);
+      border: 1px solid #f87171;
+      backdrop-filter: blur(10px);
+      padding: 8px 16px;
+      border-radius: 30px;
+      font-size: 13px;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      transition: opacity 0.3s ease;
+    }
+
+    #ssl-notice.hidden {
+      display: none;
+    }
+
+    .ssl-switch-btn {
+      background: #ffffff;
+      color: #991b1b;
+      border: none;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    /* Initial Welcome Landing Screen */
+    #start-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: radial-gradient(circle at 50% 16%, #ffffff 0%, #faf6f7 42%, #eef2f7 100%);
+      color: #2c2d3a;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: max(16px, env(safe-area-inset-top, 16px)) max(16px, env(safe-area-inset-right, 16px)) max(32px, env(safe-area-inset-bottom, 24px)) max(16px, env(safe-area-inset-left, 16px));
+      text-align: center;
+      transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.6s;
+      overflow-y: auto;
+      overflow-x: hidden;
+      touch-action: pan-y !important;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-y: contain;
+    }
+
+    #start-overlay.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .landing-ambient-glow {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 0;
+    }
+
+    .glow-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(65px);
+      opacity: 0.45;
+      animation: floatOrb 10s ease-in-out infinite alternate;
+    }
+
+    .glow-top {
+      top: -10%;
+      left: 20%;
+      width: 48vw;
+      height: 48vw;
+      background: radial-gradient(circle, rgba(254, 205, 211, 0.8) 0%, rgba(253, 164, 175, 0.2) 70%, transparent 100%);
+    }
+
+    .glow-bottom {
+      bottom: -15%;
+      right: 15%;
+      width: 42vw;
+      height: 42vw;
+      background: radial-gradient(circle, rgba(224, 231, 255, 0.75) 0%, rgba(199, 210, 254, 0.2) 70%, transparent 100%);
+      animation-delay: -5s;
+    }
+
+    @keyframes floatOrb {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(30px, -20px) scale(1.08); }
+    }
+
+    .landing-header {
+      width: 100%;
+      max-width: 960px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+      z-index: 2;
+    }
+
+    .landing-brand-logo img {
+      height: clamp(38px, 5vw, 50px);
+      width: auto;
+      object-fit: contain;
+      display: block;
+    }
+
+    .landing-hero {
+      width: 100%;
+      max-width: 820px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto;
+      flex: 1 0 auto;
+      padding: 8px 0 14px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .vr-visor-wrap {
+      width: 100%;
+      max-width: 580px;
+      position: relative;
+      filter: drop-shadow(0 20px 40px rgba(139, 59, 78, 0.22)) drop-shadow(0 6px 16px rgba(224, 90, 91, 0.12));
+      animation: visorFloat 6s ease-in-out infinite;
+    }
+
+    @keyframes visorFloat {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-7px); }
+    }
+
+    .vr-visor-svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .visor-title-group {
+      margin-top: clamp(10px, 1.8vw, 18px);
+      position: relative;
+      z-index: 3;
+      margin-bottom: 6px;
+    }
+
+    h1 {
+      font-size: clamp(15px, 1.8vw, 17px);
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      line-height: 1.15;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, #1f1b2e 0%, #5d253c 50%, #c43c4e 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin: 0;
+    }
+
+    .sub-tagline {
+      font-size: clamp(11.5px, 1.3vw, 13px);
+      font-weight: 600;
+      color: #64748b;
+      margin-top: 4px;
+      letter-spacing: 0.03em;
+    }
+
+    .credits-block {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      max-width: 620px;
+      width: 100%;
+      margin: 12px auto 20px;
+      padding: 12px 20px;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(226, 232, 240, 0.95);
+      border-radius: 14px;
+      box-shadow: 0 8px 24px rgba(30, 27, 54, 0.04);
+      box-sizing: border-box;
+    }
+
+    .guidance-line {
+      font-size: clamp(11.5px, 1.35vw, 13.5px);
+      font-weight: 500;
+      color: #475569;
+      line-height: 1.5;
+      margin: 0;
+      white-space: nowrap;
+      text-align: center;
+    }
+
+    .guidance-line strong {
+      color: #1e293b;
+      font-weight: 700;
+    }
+
+    /* 6 Leshya Color Swatches Preview Bar */
+    .leshya-preview-bar {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .leshya-pill-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #1e293b;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+
+    .leshya-pill-tag .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: 0 0 4px rgba(0,0,0,0.25);
+    }
+
+    .leshya-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 22px;
+      background: linear-gradient(135deg, rgba(224, 90, 91, 0.12), rgba(139, 59, 78, 0.1));
+      border: 1px solid rgba(224, 90, 91, 0.32);
+      border-radius: 999px;
+      color: #8b2c45;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      box-shadow: 0 4px 14px rgba(224, 90, 91, 0.08);
+    }
+
+    .leshya-badge-btn {
+      cursor: pointer;
+      font-family: inherit;
+      outline: none;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      overflow: hidden;
+      border: 1.5px solid rgba(224, 90, 91, 0.45);
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(254, 242, 242, 0.92));
+      box-shadow: 0 4px 18px rgba(224, 90, 91, 0.14);
+      animation: badge-pulse-glow 3.2s infinite ease-in-out;
+    }
+
+    @keyframes badge-pulse-glow {
+      0%, 100% {
+        box-shadow: 0 4px 18px rgba(224, 90, 91, 0.14), 0 0 0 0 rgba(224, 90, 91, 0.35);
+        border-color: rgba(224, 90, 91, 0.45);
+      }
+      50% {
+        box-shadow: 0 8px 26px rgba(224, 90, 91, 0.28), 0 0 0 7px rgba(224, 90, 91, 0.08);
+        border-color: rgba(224, 90, 91, 0.75);
+      }
+    }
+
+    .leshya-badge-btn:hover {
+      transform: translateY(-2px) scale(1.04);
+      background: linear-gradient(135deg, #ffffff, #fee2e2);
+      border-color: #e05a5b;
+      box-shadow: 0 10px 30px rgba(224, 90, 91, 0.32);
+    }
+
+    .badge-icon-pulse {
+      display: inline-block;
+      font-size: 15px;
+      animation: icon-float 2s infinite ease-in-out;
+    }
+
+    @keyframes icon-float {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.22); }
+    }
+
+    .badge-audio-pill {
+      background: #e05a5b;
+      color: #ffffff;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      margin-left: 2px;
+      box-shadow: 0 2px 8px rgba(224, 90, 91, 0.4);
+    }
+
+    .projects-section {
+      width: 100%;
+      max-width: 580px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .button-group {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      width: 100%;
+    }
+
+    .start-btn {
+      appearance: none;
+      border: none;
+      outline: none;
+      background: linear-gradient(135deg, #e05a5b 0%, #c43c4e 100%);
+      color: #ffffff;
+      padding: clamp(12px, 2.2vh, 16px) 18px;
+      font-size: clamp(14px, 1.8vw, 16px);
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      border-radius: 14px;
+      cursor: pointer;
+      box-shadow: 0 10px 24px rgba(196, 60, 78, 0.32);
+      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-decoration: none;
+    }
+
+    .start-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 28px rgba(196, 60, 78, 0.42);
+      background: linear-gradient(135deg, #e86869 0%, #d44759 100%);
+    }
+
+    .start-btn:active {
+      transform: translateY(1px);
+    }
+
+    .start-btn-vr {
+      background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+      box-shadow: 0 10px 24px rgba(2, 132, 199, 0.32);
+    }
+
+    .start-btn-vr:hover {
+      background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+      box-shadow: 0 14px 28px rgba(2, 132, 199, 0.42);
+    }
+
+    .switch-video-btn {
+      background: rgba(255, 255, 255, 0.9);
+      color: #1e293b;
+      border: 1px solid #cbd5e1;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+      font-size: 13px;
+      font-weight: 700;
+      padding: 10px 16px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+
+    .switch-video-btn:hover {
+      background: #ffffff;
+      border-color: #94a3b8;
+      color: #0f172a;
+      transform: translateY(-1px);
+    }
+
+    /* Analogies Section: 1: Hunger Analogy & 2: Anger Analogy */
+    .analogies-section {
+      width: 100%;
+      max-width: 760px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      margin-top: 4px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .analogies-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: clamp(14px, 2.5vw, 24px);
+      width: 100%;
+    }
+
+    .analogy-card {
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1.5px solid rgba(226, 232, 240, 0.95);
+      border-radius: 20px;
+      padding: clamp(16px, 2.4vw, 22px) clamp(16px, 2.5vw, 24px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 14px;
+      box-shadow: 0 10px 28px rgba(30, 27, 54, 0.05), 0 1px 3px rgba(0, 0, 0, 0.02);
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+      position: relative;
+    }
+
+    .analogy-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 14px 34px rgba(224, 90, 91, 0.14), 0 3px 8px rgba(0, 0, 0, 0.03);
+      border-color: rgba(224, 90, 91, 0.45);
+    }
+
+    .analogy-title-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .analogy-name {
+      font-size: clamp(13px, 1.4vw, 14.5px);
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      color: #1e1b36;
+      margin: 0;
+      line-height: 1.25;
+    }
+
+    .analogy-subtitle {
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748b;
+      letter-spacing: 0.03em;
+    }
+
+    .analogy-btn-group {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(12px, 2vw, 18px);
+      width: 100%;
+    }
+
+    /* Tactile Icon-Only Buttons */
+    .analogy-btn-icon {
+      position: relative;
+      width: clamp(56px, 7vw, 64px);
+      height: clamp(56px, 7vw, 64px);
+      border-radius: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border: 1.5px solid transparent;
+      outline: none;
+      text-decoration: none;
+      -webkit-tap-highlight-color: transparent;
+      transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+      padding: 0;
+      box-sizing: border-box;
+      flex-shrink: 0;
+    }
+
+    /* VR Headset Button (Dark Obsidian Glassmorphism) */
+    .btn-vr-headset {
+      background: linear-gradient(135deg, #242337 0%, #12111f 100%);
+      color: #ffffff;
+      border: 1.5px solid rgba(224, 90, 91, 0.45);
+      box-shadow: 0 8px 22px rgba(18, 17, 31, 0.35), 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-vr-headset:hover {
+      background: linear-gradient(135deg, #2e2b46 0%, #1a182c 100%);
+      border-color: #e05a5b;
+      transform: translateY(-3px) scale(1.05);
+      box-shadow: 0 14px 30px rgba(18, 17, 31, 0.45), 0 0 16px rgba(224, 90, 91, 0.3);
+    }
+
+    .btn-vr-headset:active {
+      transform: translateY(0) scale(0.96);
+      box-shadow: 0 4px 12px rgba(18, 17, 31, 0.25);
+    }
+
+    /* 360 Theater Button (Sunset Crimson Gradient) */
+    .btn-360-theater {
+      background: linear-gradient(135deg, #e05a5b 0%, #c43c4e 100%);
+      color: #ffffff;
+      border: 1.5px solid rgba(255, 255, 255, 0.35);
+      box-shadow: 0 8px 22px rgba(224, 90, 91, 0.36), 0 2px 4px rgba(0, 0, 0, 0.08);
+    }
+
+    .btn-360-theater:hover {
+      background: linear-gradient(135deg, #eb6465 0%, #ce4355 100%);
+      transform: translateY(-3px) scale(1.05);
+      box-shadow: 0 14px 30px rgba(224, 90, 91, 0.5), 0 0 18px rgba(224, 90, 91, 0.4);
+    }
+
+    .btn-360-theater:active {
+      transform: translateY(0) scale(0.96);
+      box-shadow: 0 4px 12px rgba(224, 90, 91, 0.25);
+    }
+
+    .analogy-btn-icon svg {
+      width: clamp(28px, 3.6vw, 34px);
+      height: clamp(28px, 3.6vw, 34px);
+      display: block;
+      pointer-events: none;
+      transition: transform 0.2s ease;
+    }
+
+    .analogy-btn-icon:hover svg {
+      transform: scale(1.08);
+    }
+
+    /* Floating Tooltip Pill on Hover / Focus */
+    .icon-tooltip {
+      position: absolute;
+      bottom: -32px;
+      left: 50%;
+      transform: translateX(-50%) translateY(4px);
+      background: rgba(15, 23, 42, 0.94);
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+      padding: 3px 9px;
+      border-radius: 999px;
+      pointer-events: none;
+      opacity: 0;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      z-index: 10;
+    }
+
+    .analogy-btn-icon:hover .icon-tooltip,
+    .analogy-btn-icon:focus-visible .icon-tooltip {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ====================================================================
+       MOBILE LANDING PAGE RESPONSIVENESS & TOUCH OPTIMIZATIONS
+       ==================================================================== */
+    @media (max-width: 680px) {
+      #start-overlay {
+        padding: max(12px, env(safe-area-inset-top, 12px)) max(12px, env(safe-area-inset-right, 12px)) max(28px, env(safe-area-inset-bottom, 20px)) max(12px, env(safe-area-inset-left, 12px));
+        gap: 8px;
+      }
+
+      .landing-header {
+        padding: 0 2px;
+      }
+
+      .landing-brand-logo img {
+        height: clamp(30px, 7.5vw, 40px);
+      }
+
+      .landing-hero {
+        padding: 6px 0 12px;
+      }
+
+      .vr-visor-wrap {
+        max-width: clamp(230px, 72vw, 340px);
+      }
+
+      .visor-title-group {
+        margin-top: 10px;
+        margin-bottom: 6px;
+      }
+
+      h1 {
+        font-size: clamp(13.5px, 3.5vw, 15.5px);
+        letter-spacing: 0.04em;
+      }
+
+      .sub-tagline {
+        font-size: 11.5px;
+      }
+
+      .credits-block {
+        width: 100%;
+        max-width: 480px;
+        padding: 9px 10px;
+        margin: 8px auto 14px;
+        border-radius: 14px;
+        gap: 3px;
+        box-shadow: 0 4px 16px rgba(30, 27, 54, 0.04);
+        box-sizing: border-box;
+      }
+
+      .guidance-line {
+        font-size: clamp(9.2px, 2.7vw, 11.5px);
+        line-height: 1.45;
+        white-space: nowrap;
+      }
+
+      .leshya-preview-bar {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 5px;
+        margin-bottom: 12px;
+        max-width: 440px;
+      }
+
+      .leshya-pill-tag {
+        padding: 4px 9px;
+        font-size: 10.5px;
+        gap: 4px;
+        border-radius: 12px;
+      }
+
+      .leshya-pill-tag .dot {
+        width: 8px;
+        height: 8px;
+      }
+
+      .analogies-section {
+        width: 100%;
+        max-width: 440px;
+        gap: 12px;
+      }
+
+      .analogies-grid {
+        grid-template-columns: 1fr;
+        max-width: 100%;
+        gap: 12px;
+      }
+
+      .analogy-card {
+        padding: 14px 14px;
+        gap: 12px;
+        border-radius: 16px;
+      }
+
+      .analogy-title-wrap {
+        gap: 2px;
+      }
+
+      .analogy-name {
+        font-size: 13.5px;
+      }
+
+      .analogy-subtitle {
+        font-size: 11.5px;
+      }
+
+      /* Mobile Button Transformation: From mystery icons with hover tooltips to clear, accessible touch pills */
+      .analogy-btn-group {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        width: 100%;
+      }
+
+      .analogy-btn-icon {
+        width: 100%;
+        height: auto;
+        min-height: 48px;
+        padding: 10px 10px;
+        border-radius: 14px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        box-sizing: border-box;
+      }
+
+      .analogy-btn-icon svg {
+        width: 22px;
+        height: 22px;
+        flex-shrink: 0;
+      }
+
+      .icon-tooltip {
+        position: static;
+        transform: none;
+        opacity: 1;
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        color: #ffffff;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        padding: 0;
+        pointer-events: none;
+        white-space: nowrap;
+        display: inline-block;
+      }
+    }
+
+    /* Small Screen Optimization (iPhone SE, narrow phones <= 380px) */
+    @media (max-width: 380px) {
+      .landing-brand-logo img {
+        height: 26px;
+      }
+      .vr-visor-wrap {
+        max-width: 210px;
+      }
+      h1 {
+        font-size: 13px;
+      }
+      .credits-block {
+        padding: 7px 4px;
+      }
+      .guidance-line {
+        font-size: clamp(8.4px, 2.5vw, 9.6px);
+        white-space: nowrap;
+      }
+      .leshya-pill-tag {
+        font-size: 9.5px;
+        padding: 3px 6px;
+      }
+      .analogy-card {
+        padding: 12px 10px;
+      }
+      .analogy-name {
+        font-size: 12px;
+      }
+      .analogy-btn-group {
+        gap: 6px;
+      }
+      .analogy-btn-icon {
+        min-height: 44px;
+        padding: 8px 6px;
+        gap: 5px;
+      }
+      .analogy-btn-icon svg {
+        width: 18px;
+        height: 18px;
+      }
+      .icon-tooltip {
+        font-size: 11px;
+      }
+    }
+
+    /* Landscape Mobile Viewport (max-height: 520px and landscape) */
+    @media (max-height: 520px) and (orientation: landscape) {
+      #start-overlay {
+        padding: max(10px, env(safe-area-inset-top, 10px)) max(16px, env(safe-area-inset-right, 16px)) max(18px, env(safe-area-inset-bottom, 12px)) max(16px, env(safe-area-inset-left, 16px));
+      }
+
+      .landing-header {
+        margin-bottom: 4px;
+      }
+
+      .landing-brand-logo img {
+        height: 26px;
+      }
+
+      .landing-hero {
+        padding: 4px 0 8px;
+      }
+
+      .vr-visor-wrap {
+        max-width: 170px;
+        animation: none;
+      }
+
+      .visor-title-group {
+        margin-top: 4px;
+        margin-bottom: 2px;
+      }
+
+      h1 {
+        font-size: 13px;
+      }
+
+      .credits-block {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 3px 12px;
+        padding: 6px 12px;
+        margin: 4px auto 8px;
+        border-radius: 10px;
+        max-width: 680px;
+      }
+
+      .guidance-line {
+        font-size: 10.5px;
+        margin: 0;
+        white-space: nowrap;
+      }
+
+      .leshya-preview-bar {
+        margin-bottom: 6px;
+        gap: 4px;
+      }
+
+      .leshya-pill-tag {
+        padding: 2px 7px;
+        font-size: 9.5px;
+      }
+
+      .analogies-section {
+        max-width: 680px;
+      }
+
+      .analogies-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+      }
+
+      .analogy-card {
+        padding: 10px 12px;
+        gap: 8px;
+        border-radius: 14px;
+      }
+
+      .analogy-name {
+        font-size: 12.5px;
+      }
+
+      .analogy-subtitle {
+        font-size: 10.5px;
+      }
+
+      .analogy-btn-group {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+      }
+
+      .analogy-btn-icon {
+        min-height: 40px;
+        padding: 6px 8px;
+        border-radius: 10px;
+      }
+
+      .analogy-btn-icon svg {
+        width: 17px;
+        height: 17px;
+      }
+
+      .icon-tooltip {
+        font-size: 11px;
+      }
+    }
+
+    /* Top Badges & Controls in 360° View */
+    #hud-left-logo {
+      position: fixed;
+      top: max(16px, env(safe-area-inset-top, 16px));
+      left: max(18px, env(safe-area-inset-left, 18px));
+      z-index: 100;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #hud-event-logo {
+      position: fixed;
+      top: max(16px, env(safe-area-inset-top, 16px));
+      right: max(18px, env(safe-area-inset-right, 18px));
+      z-index: 100;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .hud-dot-pill {
+      background: #ffffff;
+      padding: 4px;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto;
+    }
+
+    .hud-dot-pill img {
+      width: clamp(38px, 5vw, 46px);
+      height: clamp(38px, 5vw, 46px);
+      display: block;
+      object-fit: contain;
+      border-radius: 8px;
+    }
+
+    .landing-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .fs-toggle-btn {
+      width: clamp(40px, 5.2vw, 46px);
+      height: clamp(40px, 5.2vw, 46px);
+      min-width: 40px;
+      min-height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 12px;
+      cursor: pointer;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+      transition: all 0.22s ease;
+      background: rgba(15, 23, 42, 0.82);
+      color: #f8fafc;
+      outline: none;
+    }
+
+    .fs-toggle-btn:hover {
+      background: rgba(30, 41, 59, 0.95);
+      color: #38bdf8;
+      border-color: rgba(56, 189, 248, 0.7);
+      transform: translateY(-2px);
+    }
+
+    .fs-toggle-btn svg {
+      width: 20px;
+      height: 20px;
+      display: block;
+      stroke: currentColor;
+    }
+
+    /* Floating In-VR / 360 HUD Toolbar (Top-Center) */
+    #hud-toolbar {
+      position: fixed;
+      top: max(16px, env(safe-area-inset-top, 16px));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      padding: 6px 14px;
+      border-radius: 30px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+      pointer-events: auto;
+      max-width: 90vw;
+      overflow-x: auto;
+    }
+
+    .hud-tool-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: #e2e8f0;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+    }
+
+    .hud-tool-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .hud-tool-btn.active {
+      background: rgba(56, 189, 248, 0.2);
+      color: #38bdf8;
+      border-color: #38bdf8;
+    }
+
+    /* Bottom Info Card for the currently focused Leshya */
+    #focus-info-card {
+      position: fixed;
+      bottom: max(20px, env(safe-area-inset-bottom, 20px));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: rgba(15, 23, 42, 0.88);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 10px 22px;
+      border-radius: 24px;
+      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.5);
+      max-width: min(92vw, 680px);
+      pointer-events: auto;
+      transition: all 0.3s ease;
+    }
+
+    .focus-color-badge {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .focus-text-wrap {
+      display: flex;
+      flex-direction: column;
+      text-align: left;
+      overflow: hidden;
+    }
+
+    .focus-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .focus-sub {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .focus-pill-tag {
+      display: inline-flex;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background: rgba(56, 189, 248, 0.22);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.45);
+      letter-spacing: 0.02em;
+      margin-left: 6px;
+    }
+
+    .focus-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+
+    .inspect-btn {
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      color: #ffffff;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 16px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s ease;
+    }
+
+    .inspect-btn:hover {
+      background: linear-gradient(135deg, #0ea5e9, #0284c7);
+      transform: translateY(-1px);
+    }
+
+    /* High-Res Comic Inspection Lightbox Modal */
+    #inspect-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 10001;
+      background: rgba(3, 7, 18, 0.94);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.3s ease, visibility 0.3s;
+    }
+
+    #inspect-modal.active {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    .modal-content-wrap {
+      position: relative;
+      max-width: 900px;
+      width: 100%;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
+    }
+
+    .modal-header {
+      width: 100%;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(2, 6, 23, 0.6);
+    }
+
+    .modal-title {
+      font-size: 17px;
+      font-weight: 800;
+      color: #f8fafc;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .modal-close-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: #94a3b8;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      transition: all 0.2s ease;
+    }
+
+    .modal-close-btn:hover {
+      background: rgba(239, 68, 68, 0.25);
+      color: #f87171;
+    }
+
+    .modal-image-container {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      overflow: hidden;
+      flex: 1;
+    }
+
+    .modal-image-container img {
+      max-width: 100%;
+      max-height: 62vh;
+      object-fit: contain;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-footer {
+      width: 100%;
+      padding: 12px 20px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(2, 6, 23, 0.6);
+    }
+
+    .modal-nav-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      padding: 6px 14px;
+      border-radius: 16px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .modal-nav-btn:hover {
+      background: rgba(56, 189, 248, 0.2);
+      border-color: #38bdf8;
+      color: #38bdf8;
+    }
+
+    .modal-desc {
+      font-size: 13px;
+      color: #cbd5e1;
+      text-align: center;
+      max-width: 520px;
+      line-height: 1.4;
+    }
+
+    /* Mobile Hint */
+    #mobile-hint {
+      position: fixed;
+      bottom: 84px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 99;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-size: 11px;
+      color: #94a3b8;
+      pointer-events: none;
+      opacity: 0.9;
+      white-space: nowrap;
+    }
+
+    /* Bottom Viewport 2D Action Dock (Restart Experience & Switch to Hunger VR) */
+    #hud-bottom-dock {
+      position: fixed;
+      bottom: 22px;
+      left: 24px;
+      z-index: 100;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      pointer-events: auto;
+      user-select: none;
+    }
+
+    .hud-bottom-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 18px;
+      border-radius: 999px;
+      color: #f8fafc;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      user-select: none;
+    }
+
+    #hud-bottom-restart-btn {
+      background: rgba(15, 23, 42, 0.88);
+      border: 1px solid rgba(56, 189, 248, 0.45);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 14px rgba(56, 189, 248, 0.2);
+    }
+
+    #hud-bottom-restart-btn:hover {
+      background: rgba(14, 116, 144, 0.92);
+      border-color: #38bdf8;
+      color: #ffffff;
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(56, 189, 248, 0.45);
+    }
+
+    #hud-bottom-switch-btn {
+      background: rgba(30, 24, 12, 0.88);
+      border: 1px solid rgba(251, 191, 36, 0.45);
+      color: #fef3c7;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 14px rgba(245, 158, 11, 0.2);
+    }
+
+    #hud-bottom-switch-btn:hover {
+      background: rgba(180, 83, 9, 0.92);
+      border-color: #fbbf24;
+      color: #ffffff;
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(245, 158, 11, 0.45);
+    }
+
+    .hud-bottom-btn:active {
+      transform: translateY(1px) scale(0.97);
+    }
+
+    .restart-btn-icon,
+    .switch-btn-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.4s ease;
+    }
+
+    .restart-btn-icon {
+      color: #38bdf8;
+    }
+
+    .switch-btn-icon {
+      color: #fbbf24;
+    }
+
+    #hud-bottom-restart-btn:hover .restart-btn-icon {
+      transform: rotate(180deg);
+      color: #ffffff;
+    }
+
+    #hud-bottom-switch-btn:hover .switch-btn-icon {
+      transform: scale(1.15);
+      color: #ffffff;
+    }
+
+    .restart-btn-hint {
+      font-size: 11px;
+      font-weight: 500;
+      color: #94a3b8;
+      margin-left: 2px;
+    }
+
+    @media (max-width: 640px) {
+      #hud-bottom-dock {
+        bottom: 84px;
+        left: 20px;
+        gap: 8px;
+      }
+      .hud-bottom-btn {
+        padding: 7px 13px;
+        font-size: 11.5px;
+      }
+      .restart-btn-hint {
+        display: none;
+      }
+    }
+
+    @media (orientation: landscape) and (max-height: 520px) {
+      #hud-bottom-dock {
+        bottom: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        gap: 8px;
+      }
+      .hud-bottom-btn {
+        padding: 6px 12px;
+        font-size: 11px;
+      }
+      .restart-btn-hint {
+        display: none;
+      }
+    }
+
+    /* Restart Experience Story Selection Pop-up Modal */
+    .restart-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 10020;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(2, 6, 23, 0.82);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      opacity: 1;
+      visibility: visible;
+      transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.3s ease;
+    }
+
+    .restart-modal-backdrop.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .restart-modal-card {
+      position: relative;
+      width: 100%;
+      max-width: 780px;
+      background: linear-gradient(145deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 26px;
+      padding: 34px 38px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8), 0 0 35px rgba(56, 189, 248, 0.2);
+      transform: scale(1) translateY(0);
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      color: #f8fafc;
+      font-family: inherit;
+    }
+
+    .restart-modal-backdrop.hidden .restart-modal-card {
+      transform: scale(0.92) translateY(18px);
+    }
+
+    .restart-modal-close-btn {
+      position: absolute;
+      top: 22px;
+      right: 22px;
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 50%;
+      color: #94a3b8;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .restart-modal-close-btn:hover {
+      background: rgba(239, 68, 68, 0.25);
+      border-color: #ef4444;
+      color: #ffffff;
+      transform: rotate(90deg) scale(1.06);
+    }
+
+    .restart-modal-header {
+      text-align: center;
+      margin-bottom: 26px;
+    }
+
+    .restart-modal-badge {
+      display: inline-block;
+      padding: 5px 16px;
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      color: #38bdf8;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+    }
+
+    .restart-modal-title {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #ffffff;
+      margin: 0 0 6px 0;
+    }
+
+    .restart-modal-subtitle {
+      font-size: 14px;
+      color: #94a3b8;
+      margin: 0;
+    }
+
+    .restart-options-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      margin-bottom: 22px;
+    }
+
+    .restart-story-card {
+      position: relative;
+      background: rgba(15, 23, 42, 0.7);
+      border: 2px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      padding: 24px;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+      transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+      color: inherit;
+      font-family: inherit;
+    }
+
+    .restart-story-card:hover {
+      transform: translateY(-4px);
+    }
+
+    /* Hunger Story Styling */
+    .restart-story-card.card-hunger {
+      border-color: rgba(245, 158, 11, 0.4);
+      background: linear-gradient(155deg, rgba(30, 41, 59, 0.85) 0%, rgba(20, 24, 39, 0.95) 100%);
+    }
+
+    .restart-story-card.card-hunger:hover {
+      border-color: #f59e0b;
+      box-shadow: 0 16px 36px rgba(245, 158, 11, 0.25), 0 0 24px rgba(245, 158, 11, 0.15);
+    }
+
+    .restart-story-card.card-hunger .story-action-btn {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #0f172a;
+    }
+
+    .restart-story-card.card-hunger .story-title {
+      color: #fbbf24;
+    }
+
+    /* Anger Story Styling */
+    .restart-story-card.card-anger {
+      border-color: rgba(239, 68, 68, 0.4);
+      background: linear-gradient(155deg, rgba(38, 28, 48, 0.85) 0%, rgba(22, 18, 32, 0.95) 100%);
+    }
+
+    .restart-story-card.card-anger:hover {
+      border-color: #ef4444;
+      box-shadow: 0 16px 36px rgba(239, 68, 68, 0.25), 0 0 24px rgba(239, 68, 68, 0.15);
+    }
+
+    .restart-story-card.card-anger .story-action-btn {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: #ffffff;
+    }
+
+    .restart-story-card.card-anger .story-title {
+      color: #f87171;
+    }
+
+    .story-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .story-num-pill {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      color: #e2e8f0;
+    }
+
+    .story-format-pill {
+      font-size: 11px;
+      font-weight: 600;
+      color: #94a3b8;
+    }
+
+    .story-icon-wrap {
+      font-size: 38px;
+      line-height: 1;
+      margin-bottom: 10px;
+    }
+
+    .story-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin: 0 0 4px 0;
+    }
+
+    .story-hindi {
+      display: block;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #cbd5e1;
+      margin-bottom: 10px;
+    }
+
+    .story-desc {
+      font-size: 12px;
+      line-height: 1.5;
+      color: #94a3b8;
+      margin: 0 0 18px 0;
+    }
+
+    .story-action-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 10px 16px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+      transition: all 0.2s ease;
+    }
+
+    .restart-story-card:hover .story-action-btn {
+      transform: scale(1.02);
+      filter: brightness(1.1);
+    }
+
+    .restart-modal-footer {
+      text-align: center;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .restart-modal-hint {
+      font-size: 12px;
+      color: #94a3b8;
+    }
+
+    @media (max-width: 680px) {
+      .restart-modal-card {
+        padding: 24px 20px;
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+      .restart-options-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+      }
+      .restart-modal-title {
+        font-size: 22px;
+      }
+      .story-icon-wrap {
+        font-size: 32px;
+      }
+    }
+
+    /* Fullscreen & Story Feedback Toast */
+    .fs-toast {
+      position: fixed;
+      bottom: 60px;
+      left: 50%;
+      transform: translateX(-50%) translateY(0);
+      background: rgba(15, 23, 42, 0.92);
+      color: #f8fafc;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      padding: 8px 18px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5), 0 0 14px rgba(56, 189, 248, 0.25);
+      z-index: 10005;
+      pointer-events: none;
+      opacity: 1;
+      transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      white-space: nowrap;
+    }
+
+    .fs-toast.hidden {
+      opacity: 0;
+      transform: translateX(-50%) translateY(12px);
+      pointer-events: none;
+    }
+
+    /* Dual-Eye VR Stereo Split-Screen Overlay (2 Side-by-Side Eye Squares) */
+    #vr-stereo-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 950;
+      pointer-events: none;
+      display: none;
+    }
+
+    body.stereo-vr-active #vr-stereo-overlay {
+      display: flex;
+    }
+
+    .vr-eye-frame {
+      flex: 1;
+      height: 100%;
+      position: relative;
+      box-shadow: inset 0 0 0 10px #030712, inset 0 0 38px rgba(0, 0, 0, 0.85);
+      border-radius: 28px;
+    }
+
+    #vr-center-divider {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      width: 4px;
+      transform: translateX(-50%);
+      background: #030712;
+      box-shadow: 0 0 8px rgba(56, 189, 248, 0.45);
+    }
+
+    /* Small Icon-Only Close Button on Bottom-Right */
+    #exit-stereo-btn {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto;
+      background: rgba(15, 23, 42, 0.78);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #f8fafc;
+      border-radius: 50%;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 1000;
+    }
+
+    #exit-stereo-btn:hover {
+      background: #dc2626;
+      border-color: #f87171;
+      color: #ffffff;
+      transform: scale(1.08);
+      box-shadow: 0 6px 20px rgba(220, 38, 38, 0.45);
+    }
+
+    #exit-stereo-btn:active {
+      transform: scale(0.92);
+    }
+
+    /* Hide 2D HUD / Screen Overlay when in VR Mode or Stereo Split */
+    .a-in-vr #hud-left-logo,
+    .a-in-vr #hud-event-logo,
+    .a-in-vr #hud-toolbar,
+    .a-in-vr #hud-bottom-dock,
+    .a-in-vr #hud-bottom-restart-btn,
+    .a-in-vr #hud-bottom-switch-btn,
+    .a-in-vr #fs-toast,
+    .a-in-vr #focus-info-card,
+    .a-in-vr #mobile-hint,
+    .a-in-vr #ssl-notice,
+    body.stereo-vr-active #hud-left-logo,
+    body.stereo-vr-active #hud-event-logo,
+    body.stereo-vr-active #hud-toolbar,
+    body.stereo-vr-active #hud-bottom-dock,
+    body.stereo-vr-active #hud-bottom-restart-btn,
+    body.stereo-vr-active #hud-bottom-switch-btn,
+    body.stereo-vr-active #fs-toast,
+    body.stereo-vr-active #focus-info-card,
+    body.stereo-vr-active #mobile-hint,
+    body.stereo-vr-active #ssl-notice,
+    #hud-left-logo,
+    #hud-event-logo,
+    #hud-toolbar,
+    #hud-bottom-dock,
+    #hud-bottom-restart-btn,
+    #hud-bottom-switch-btn,
+    #focus-info-card,
+    #mobile-hint,
+    .a-enter-vr {
+      display: none !important;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Dual-Eye Stereo Split-Screen Frame Overlay (Left Eye & Right Eye Squares for VR Headsets) -->
+  <div id="vr-stereo-overlay">
+    <div class="vr-eye-frame" id="vr-eye-left"></div>
+    <div class="vr-eye-frame" id="vr-eye-right"></div>
+    <div id="vr-center-divider"></div>
+    <button id="stereo-mute-btn" title="Mute / Unmute Tone (M key)" aria-label="Mute or unmute tone">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+      </svg>
+    </button>
+    <button id="exit-stereo-btn" title="Exit VR (Esc or V)" aria-label="Exit VR mode">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Jainific Logo in 360° View (Top-Left) -->
+  <div id="hud-left-logo">
+    <div class="hud-dot-pill">
+      <img src="./jainific-logo.png" alt="Jainific" />
+    </div>
+  </div>
+
+  <!-- Top-Right Controls & DOT Logo in 360° View -->
+  <div id="hud-event-logo">
+    <a href="./index.html" class="fs-toggle-btn" style="text-decoration:none; color:#f8fafc;" title="Switch to 6 Video VR Theater" aria-label="6 Video VR Theater">
+      <span style="font-size: 18px;">🎬</span>
+    </a>
+    <button id="hud-fullscreen-btn" class="fs-toggle-btn" type="button" title="Full Screen (F)" aria-label="Toggle Fullscreen">
+      <svg class="fs-icon-enter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8 3H5a2 2 0 0 0-2 2v3"></path>
+        <path d="M21 8V5a2 2 0 0 0-2-2h-3"></path>
+        <path d="M3 16v3a2 2 0 0 0 2 2h3"></path>
+        <path d="M16 21h3a2 2 0 0 0 2-2v-3"></path>
+      </svg>
+      <svg class="fs-icon-exit hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8 3v3a2 2 0 0 1-2 2H3"></path>
+        <path d="M21 8h-3a2 2 0 0 1-2-2V3"></path>
+        <path d="M3 16h3a2 2 0 0 1 2 2v3"></path>
+        <path d="M16 21v-3a2 2 0 0 1 2-2h3"></path>
+      </svg>
+    </button>
+    <div class="hud-dot-pill">
+      <img src="./dot-logo.png" alt="DOT - Uplifting You Digitally" />
+    </div>
+  </div>
+
+  <!-- Floating In-VR / 360 HUD Toolbar (Top-Center) -->
+  <div id="hud-toolbar">
+    <button id="layout-toggle-btn" class="hud-tool-btn" type="button" title="Toggle Layout (L)">
+      <span>📐</span>
+      <span id="layout-label">360° Ring</span>
+    </button>
+    <button id="badge-mode-btn" class="hud-tool-btn" type="button" title="Toggle Badge Language (T)">
+      <span>🏷️</span>
+      <span id="badge-mode-label">Name: Both</span>
+    </button>
+  </div>
+
+  <!-- Bottom Info Card for the currently focused Leshya -->
+  <div id="focus-info-card">
+    <div id="focus-badge-color" class="focus-color-badge">⚪</div>
+    <div class="focus-text-wrap">
+      <div id="focus-title-text" class="focus-title">1. शुक्ल लेश्या (Shukla Leshya) <span class="focus-pill-tag">✨ In Focus</span></div>
+      <div id="focus-desc-text" class="focus-sub">Pure Equanimity · समता व शांति · Purity · Detachment · Peace</div>
+    </div>
+    <div class="focus-actions">
+      <button id="inspect-trigger-btn" class="inspect-btn" type="button" title="Inspect Comic (Space)">
+        <span>🔍</span>
+        <span>Inspect</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- High-Res Comic Inspection Lightbox Modal -->
+  <div id="inspect-modal">
+    <div class="modal-content-wrap">
+      <div class="modal-header">
+        <span id="modal-header-title" class="modal-title">1. शुक्ल लेश्या · Shukla Leshya</span>
+        <button id="modal-close-btn" class="modal-close-btn" type="button" title="Close (Esc)">&times;</button>
+      </div>
+      <div class="modal-image-container">
+        <img id="modal-image" src="./images/1.png" alt="Leshya Comic Panel" />
+      </div>
+      <div class="modal-footer">
+        <button id="modal-prev-btn" class="modal-nav-btn" type="button">◀ Prev</button>
+        <p id="modal-desc" class="modal-desc"></p>
+        <button id="modal-next-btn" class="modal-nav-btn" type="button">Next ▶</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Bottom Viewport 2D Action Dock (Restart Experience & Switch to Hunger VR) -->
+  <div id="hud-bottom-dock" class="hud-bottom-dock">
+    <button id="hud-bottom-restart-btn" class="hud-bottom-btn" type="button" title="Restart Experience (R)" aria-label="Restart Experience">
+      <span class="restart-btn-icon">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3"/>
+        </svg>
+      </span>
+      <span class="restart-btn-label restart-btn-text">Restart Experience</span>
+      <span class="restart-btn-hint">(R)</span>
+    </button>
+    <button id="hud-bottom-switch-btn" class="hud-bottom-btn" type="button" title="Switch to Hunger VR (6 Video Theater)" aria-label="Switch to Hunger VR">
+      <span class="switch-btn-icon">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+          <line x1="7" y1="2" x2="7" y2="22"></line>
+          <line x1="17" y1="2" x2="17" y2="22"></line>
+          <line x1="2" y1="12" x2="22" y2="12"></line>
+          <line x1="2" y1="7" x2="7" y2="7"></line>
+          <line x1="2" y1="17" x2="7" y2="17"></line>
+          <line x1="17" y1="17" x2="22" y2="17"></line>
+          <line x1="17" y1="7" x2="22" y2="7"></line>
+        </svg>
+      </span>
+      <span class="switch-btn-label switch-btn-text">Switch to Hunger VR</span>
+    </button>
+  </div>
+
+  <div id="mobile-hint">
+    📱 Move phone to look around, or swipe anywhere to drag view
+  </div>
+
+  <!-- Fullscreen Notification Toast (Accessible on Mobile and Desktop) -->
+  <div id="fs-toast" class="fs-toast hidden" role="status" aria-live="polite">
+    <span id="fs-toast-text">Full Screen Mode</span>
+  </div>
+
+  <!-- Secure Context Warning Banner (HTTPS required for VR Gyroscope) -->
+  <div id="ssl-notice" class="hidden">
+    <span>🔒 <b>VR & Mobile Gyroscope:</b> Browsers require HTTPS to enable motion sensors.</span>
+    <button id="switch-ssl-btn" class="ssl-switch-btn">Switch to HTTPS</button>
+  </div>
+
+  <!-- Experience Selection Pop-up Modal (Restart Experience: Hunger Story vs Anger Story) -->
+  <div id="restart-modal" class="restart-modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="restart-modal-title">
+    <div class="restart-modal-card">
+      <button id="restart-modal-close" class="restart-modal-close-btn" type="button" title="Close" aria-label="Close dialog">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+
+      <div class="restart-modal-header">
+        <div class="restart-modal-badge">
+          <span>🔄 SELECT VR STORY</span>
+        </div>
+        <h2 id="restart-modal-title" class="restart-modal-title">Restart Experience</h2>
+        <p class="restart-modal-subtitle">Choose which Leshya story analogy to load into the VR Theater:</p>
+      </div>
+
+      <div class="restart-options-grid">
+        <!-- Option 1: Hunger Story -->
+        <button id="btn-select-hunger" class="restart-story-card card-hunger" type="button">
+          <div class="story-card-top">
+            <span class="story-num-pill">STORY 1</span>
+            <span class="story-format-pill">🎬 6 Synchronized Videos</span>
+          </div>
+          <div class="story-card-body">
+            <div class="story-icon-wrap">🍲</div>
+            <h3 class="story-title">Hunger Story</h3>
+            <span class="story-hindi">1: भूख दृष्टांत (The Tree Parable)</span>
+            <p class="story-desc">
+              6 travelers starving in a forest encounter a fruit tree. Each mind manifests a unique Leshya—from chopping the trunk to gathering fallen fruit.
+            </p>
+          </div>
+          <div class="story-card-footer">
+            <span class="story-action-btn">Load Hunger Story ▶</span>
+          </div>
+        </button>
+
+        <!-- Option 2: Anger Story -->
+        <button id="btn-select-anger" class="restart-story-card card-anger" type="button">
+          <div class="story-card-top">
+            <span class="story-num-pill">STORY 2</span>
+            <span class="story-format-pill">🖼️ 6 Comic Views</span>
+          </div>
+          <div class="story-card-body">
+            <div class="story-icon-wrap">🔥</div>
+            <h3 class="story-title">Anger Story</h3>
+            <span class="story-hindi">2: क्रोध दृष्टांत (The Street Parable)</span>
+            <p class="story-desc">
+              6 individuals confront sudden hostility on the street. Discover how fury vs. equanimity shapes the karmic aura of the soul in 360° VR.
+            </p>
+          </div>
+          <div class="story-card-footer">
+            <span class="story-action-btn">Load Anger Story ▶</span>
+          </div>
+        </button>
+      </div>
+
+      <div class="restart-modal-footer">
+        <span class="restart-modal-hint">💡 Whichever story you choose will reset to zero state and start fresh in VR.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Welcome / Landing Overlay Screen -->
+  <div id="start-overlay">
+    <div class="landing-ambient-glow" aria-hidden="true">
+      <div class="glow-orb glow-top"></div>
+      <div class="glow-orb glow-bottom"></div>
+    </div>
+
+    <header class="landing-header">
+      <div class="landing-brand-logo">
+        <img src="./jainific-logo.png" alt="Jainific" />
+      </div>
+      <div class="landing-header-actions">
+        <button id="landing-fullscreen-btn" class="fs-toggle-btn landing-fs-btn" type="button" title="Full Screen (F)" aria-label="Toggle Fullscreen">
+          <svg class="fs-icon-enter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3"></path>
+            <path d="M21 8V5a2 2 0 0 0-2-2h-3"></path>
+            <path d="M3 16v3a2 2 0 0 0 2 2h3"></path>
+            <path d="M16 21h3a2 2 0 0 0 2-2v-3"></path>
+          </svg>
+          <svg class="fs-icon-exit hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 3v3a2 2 0 0 1-2 2H3"></path>
+            <path d="M21 8h-3a2 2 0 0 1-2-2V3"></path>
+            <path d="M3 16h3a2 2 0 0 1 2 2v3"></path>
+            <path d="M16 21v-3a2 2 0 0 1 2-2h3"></path>
+          </svg>
+        </button>
+        <div class="landing-brand-logo">
+          <img src="./dot-logo.png" alt="DOT" />
+        </div>
+      </div>
+    </header>
+
+    <main class="landing-hero">
+      <div class="vr-visor-wrap">
+        <svg class="vr-visor-svg" viewBox="0 0 800 390" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="VR Visor Illustration">
+          <defs>
+            <clipPath id="vrVisorMask">
+              <path d="M 400 22
+                       C 625 22, 760 88, 760 205
+                       C 760 318, 650 370, 525 362
+                       C 475 358, 446 218, 400 218
+                       C 354 218, 325 358, 275 362
+                       C 150 370, 40 318, 40 205
+                       C 40 88, 175 22, 400 22 Z" />
+            </clipPath>
+            <linearGradient id="visorSkyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#3c2640" />
+              <stop offset="48%" stop-color="#8b3b4e" />
+              <stop offset="82%" stop-color="#d75a58" />
+              <stop offset="100%" stop-color="#f2886b" />
+            </linearGradient>
+            <linearGradient id="planetBigGrad" x1="15%" y1="15%" x2="85%" y2="85%">
+              <stop offset="0%" stop-color="#e86f68" />
+              <stop offset="55%" stop-color="#9e394e" />
+              <stop offset="100%" stop-color="#1e1b36" />
+            </linearGradient>
+          </defs>
+          <g clip-path="url(#vrVisorMask)">
+            <rect x="0" y="0" width="800" height="390" fill="url(#visorSkyGrad)" />
+            <circle cx="145" cy="145" r="1.8" fill="#fff6d6" opacity="0.85" />
+            <circle cx="290" cy="115" r="1.6" fill="#fff6d6" opacity="0.7" />
+            <circle cx="385" cy="68" r="1.7" fill="#fff6d6" opacity="0.8" />
+            <circle cx="675" cy="140" r="1.7" fill="#fff6d6" opacity="0.75" />
+            <circle cx="502" cy="112" r="76" fill="url(#planetBigGrad)" />
+            <path d="M 380 108 L 383 121 L 396 124 L 383 127 L 380 140 L 377 127 L 364 124 L 377 121 Z" fill="#fffbe6" />
+            <path d="M 565 186 L 568 197 L 579 200 L 568 203 L 565 214 L 562 203 L 551 200 L 562 197 Z" fill="#fffbe6" />
+          </g>
+        </svg>
+      </div>
+
+      <div class="visor-title-group">
+        <h1>6 Leshya Comic VR</h1>
+        <div class="sub-tagline">360° Immersive Thought-Color Art Gallery</div>
+      </div>
+
+      <div class="credits-block">
+        <p class="guidance-line"><strong>Blessing:</strong> Aacharya Shri Vijay Vimalkirti Suriji Maharaj</p>
+        <p class="guidance-line"><strong>Guidance:</strong> Muniraaj Shri MuktiMandan Vijayji Maharaj</p>
+        <p class="guidance-line"><strong>Team:</strong> I ❤️ Jinshasan</p>
+        <p class="guidance-line"><strong>Project by:</strong> DesignOTech by Garima Shah</p>
+      </div>
+
+      <div class="leshya-preview-bar">
+        <span class="leshya-pill-tag"><span class="dot" style="background:#ffffff;border:1px solid #cbd5e1;"></span> 1. Shukla (शुक्ल)</span>
+        <span class="leshya-pill-tag"><span class="dot" style="background:#ffd700;"></span> 2. Padma (पद्म)</span>
+        <span class="leshya-pill-tag"><span class="dot" style="background:#e62e00;"></span> 3. Tejo (तेजो)</span>
+        <span class="leshya-pill-tag"><span class="dot" style="background:#475569;"></span> 4. Kapot (कापोत)</span>
+        <span class="leshya-pill-tag"><span class="dot" style="background:#0284c7;"></span> 5. Neel (नील)</span>
+        <span class="leshya-pill-tag"><span class="dot" style="background:#111827;"></span> 6. Krishna (कृष्ण)</span>
+      </div>
+
+      <!-- 1: Hunger Analogy & 2: Anger Analogy Section -->
+      <div class="analogies-section">
+        <div class="analogies-grid">
+          <!-- 1: Hunger Analogy Card -->
+          <div class="analogy-card" id="card-hunger-analogy">
+            <div class="analogy-title-wrap">
+              <h2 class="analogy-name">1: Hunger Analogy</h2>
+              <span class="analogy-subtitle">Tree Parable · 6 Synchronized Videos</span>
+            </div>
+            <div class="analogy-btn-group">
+              <a id="hunger-vr-btn" href="./index.html?mode=vr" class="analogy-btn-icon btn-vr-headset" title="VR Headset" aria-label="VR Headset - 1: Hunger Analogy">
+                <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M7 11.5C7 9.8 8.4 8.5 10.1 8.5H25.9C27.6 8.5 29 9.8 29 11.5V20.5C29 22.8 27.1 24.5 24.8 24.5H22.3C21.4 24.5 20.6 23.9 20.2 23.1L19.3 21.2C18.8 20.3 17.2 20.3 16.7 21.2L15.8 23.1C15.4 23.9 14.6 24.5 13.7 24.5H11.2C8.9 24.5 7 22.8 7 20.5V11.5Z" fill="currentColor"/>
+                  <path d="M10.5 12.5H14.5C15.3 12.5 16 13.2 16 14V16.8C16 17.6 15.3 18.2 14.5 18.2H11.5C11 18.2 10.5 17.7 10.5 17.2V12.5Z" fill="rgba(255,255,255,0.35)"/>
+                  <path d="M25.5 12.5H21.5C20.7 12.5 20 13.2 20 14V16.8C20 17.6 20.7 18.2 21.5 18.2H24.5C25 18.2 25.5 17.7 25.5 17.2V12.5Z" fill="rgba(255,255,255,0.35)"/>
+                  <path d="M7 13.5H3.5C3 13.5 2.5 14 2.5 14.5V16.5C2.5 17 3 17.5 3.5 17.5H7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M29 13.5H32.5C33 13.5 33.5 14 33.5 14.5V16.5C33.5 17 33 17.5 32.5 17.5H29" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M14.5 8.5V5.5C14.5 5 15 4.5 15.5 4.5H20.5C21 4.5 21.5 5 21.5 5.5V8.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <span class="icon-tooltip">VR Headset</span>
+              </a>
+              <a id="hunger-360-btn" href="./index.html?mode=360" class="analogy-btn-icon btn-360-theater" title="360 Theater" aria-label="360 Theater - 1: Hunger Analogy">
+                <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M4.5 23C7 26.8 11.8 29 18 29C24.2 29 29 26.8 31.5 23" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                  <path d="M4.5 11C7 7.2 11.8 5 18 5C24.2 5 29 7.2 31.5 11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                  <path d="M4.5 11V23" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                  <path d="M31.5 11V23" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                  <text x="18" y="19.8" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="9.5" font-weight="900" text-anchor="middle" fill="currentColor" letter-spacing="-0.3">360°</text>
+                </svg>
+                <span class="icon-tooltip">360 Theater</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- 2: Anger Analogy Card -->
+          <div class="analogy-card" id="card-anger-analogy">
+            <div class="analogy-title-wrap">
+              <h2 class="analogy-name">2: Anger Analogy</h2>
+              <span class="analogy-subtitle">Street Parable · 6 Comic Views</span>
+            </div>
+            <div class="analogy-btn-group">
+              <button id="anger-vr-btn" class="analogy-btn-icon btn-vr-headset" type="button" title="VR Headset" aria-label="VR Headset - 2: Anger Analogy">
+                <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M7 11.5C7 9.8 8.4 8.5 10.1 8.5H25.9C27.6 8.5 29 9.8 29 11.5V20.5C29 22.8 27.1 24.5 24.8 24.5H22.3C21.4 24.5 20.6 23.9 20.2 23.1L19.3 21.2C18.8 20.3 17.2 20.3 16.7 21.2L15.8 23.1C15.4 23.9 14.6 24.5 13.7 24.5H11.2C8.9 24.5 7 22.8 7 20.5V11.5Z" fill="currentColor"/>
+                  <path d="M10.5 12.5H14.5C15.3 12.5 16 13.2 16 14V16.8C16 17.6 15.3 18.2 14.5 18.2H11.5C11 18.2 10.5 17.7 10.5 17.2V12.5Z" fill="rgba(255,255,255,0.35)"/>
+                  <path d="M25.5 12.5H21.5C20.7 12.5 20 13.2 20 14V16.8C20 17.6 20.7 18.2 21.5 18.2H24.5C25 18.2 25.5 17.7 25.5 17.2V12.5Z" fill="rgba(255,255,255,0.35)"/>
+                  <path d="M7 13.5H3.5C3 13.5 2.5 14 2.5 14.5V16.5C2.5 17 3 17.5 3.5 17.5H7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M29 13.5H32.5C33 13.5 33.5 14 33.5 14.5V16.5C33.5 17 33 17.5 32.5 17.5H29" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M14.5 8.5V5.5C14.5 5 15 4.5 15.5 4.5H20.5C21 4.5 21.5 5 21.5 5.5V8.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <span class="icon-tooltip">VR Headset</span>
+              </button>
+              <button id="anger-360-btn" class="analogy-btn-icon btn-360-theater" type="button" title="360 Theater" aria-label="360 Theater - 2: Anger Analogy">
+                <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M4.5 23C7 26.8 11.8 29 18 29C24.2 29 29 26.8 31.5 23" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                  <path d="M4.5 11C7 7.2 11.8 5 18 5C24.2 5 29 7.2 31.5 11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                  <path d="M4.5 11V23" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                  <path d="M31.5 11V23" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                  <text x="18" y="19.8" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="9.5" font-weight="900" text-anchor="middle" fill="currentColor" letter-spacing="-0.3">360°</text>
+                </svg>
+                <span class="icon-tooltip">360 Theater</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- A-Frame Scene -->
+  <a-scene
+    renderer="antialias: false; powerPreference: high-performance; precision: medium; stencil: false;"
+    xr-mode-ui="enabled: true"
+    device-orientation-permission-ui="enabled: false"
+    background="color: #6baed6">
+
+    <!-- Preload 6 Leshya Comic Images -->
+    <a-assets timeout="20000">
+      <img id="img1" src="./images/1.png" crossorigin="anonymous">
+      <img id="img2" src="./images/2.png" crossorigin="anonymous">
+      <img id="img3" src="./images/3.png" crossorigin="anonymous">
+      <img id="img4" src="./images/4.png" crossorigin="anonymous">
+      <img id="img5" src="./images/5.png" crossorigin="anonymous">
+      <img id="img6" src="./images/6.png" crossorigin="anonymous">
+    </a-assets>
+
+    <!-- Camera Rig at Floor Level; Main Camera at 1.6m Eye-Level -->
+    <a-entity id="camera-rig" position="0 0 0">
+      <a-camera
+        id="main-camera"
+        fov="68"
+        position="0 1.6 0"
+        look-controls="magicWindowTrackingEnabled: true; touchEnabled: true; mouseEnabled: true; reverseTouchDrag: false;"
+        wasd-controls="enabled: false"
+        cursor="rayOrigin: mouse"
+        raycaster="objects: .vr-clickable; far: 20">
+        <!-- Hands-Free Center Gaze Reticle for VR Headsets & Mobile -->
+        <a-entity id="gaze-reticle"
+          position="0 0 -1"
+          geometry="primitive: ring; radiusInner: 0.009; radiusOuter: 0.015"
+          material="color: #ffffff; shader: flat; opacity: 0.75; transparent: true; depthTest: false"
+          scale="1 1 1">
+          <a-entity id="gaze-reticle-dot"
+            geometry="primitive: circle; radius: 0.0035"
+            material="color: #38bdf8; shader: flat; opacity: 0.95; depthTest: false">
+          </a-entity>
+        </a-entity>
+      </a-camera>
+
+      <!-- WebXR Controllers with Laser Pointers -->
+      <a-entity id="left-controller" laser-controls="hand: left" raycaster="objects: .vr-clickable; far: 14; lineColor: #38bdf8; lineOpacity: 0.6"></a-entity>
+      <a-entity id="right-controller" laser-controls="hand: right" raycaster="objects: .vr-clickable; far: 14; lineColor: #a855f7; lineOpacity: 0.6"></a-entity>
+    </a-entity>
+
+    <!-- Dynamic 6 Image Screens Container -->
+    <a-entity id="image-wall-rig"></a-entity>
+
+    <!-- Nadir Restart Portal Rig (Interactive 3D Button at floor nadir point) -->
+    <a-entity id="nadir-restart-rig" class="vr-clickable"></a-entity>
+
+    <!-- Natural Lighting -->
+    <a-entity light="type: hemisphere; color: #eaf4ff; groundColor: #6e772b; intensity: 0.95"></a-entity>
+    <a-entity light="type: directional; color: #fff8ea; intensity: 0.75" position="12 24 -16"></a-entity>
+
+    <!-- 360° Sky & Grass Garden Environment -->
+    <a-entity id="garden-environment"></a-entity>
+  </a-scene>
+
+  <script>
+    (function () {
+      const NUM_SCREENS = 6;
+      const SCREEN_METADATA = [
+        {
+          id: 1,
+          name: "Shukla",
+          title: "Shukla Leshya",
+          hindi: "शुक्ल लेश्या",
+          color: "#FFFFFF",
+          accentColor: "#FFFFFF",
+          glowColor: "rgba(255, 255, 255, 0.95)",
+          realm: "Shubha (Pious)",
+          state: "Pure Equanimity · समता व शांति",
+          icon: "⚪",
+          keywords: "Purity · Detachment · Peace",
+          comicStory: "Bumped into on the street — walks calmly with complete peace. \"That person is so calm!\"",
+          imageSrc: "./images/1.png"
+        },
+        {
+          id: 2,
+          name: "Padma",
+          title: "Padma Leshya",
+          hindi: "पद्म लेश्या",
+          color: "#FFD700",
+          accentColor: "#FFD700",
+          glowColor: "rgba(255, 215, 0, 0.85)",
+          realm: "Shubha (Pious)",
+          state: "Compassion & Love · करुणा व दया",
+          icon: "🟡",
+          keywords: "Forgiveness · Kindness · Devotion",
+          comicStory: "Bumped into on the street — smiles with open hands: \"No problem, are you hurt?\"",
+          imageSrc: "./images/2.png"
+        },
+        {
+          id: 3,
+          name: "Tejo",
+          title: "Tejo Leshya",
+          hindi: "तेजो लेश्या",
+          color: "#E62E00",
+          accentColor: "#E62E00",
+          glowColor: "rgba(230, 46, 0, 0.85)",
+          realm: "Shubha (Pious)",
+          state: "Discipline & Virtue · संयम व नीति",
+          icon: "🔴",
+          keywords: "Self-Control · Righteousness · Energy",
+          comicStory: "Bumped into on the street — firm and righteous: \"No problem, just please be careful next time.\"",
+          imageSrc: "./images/3.png"
+        },
+        {
+          id: 4,
+          name: "Kapot",
+          title: "Kapot Leshya",
+          hindi: "कापोत लेश्या",
+          color: "#3E4750",
+          accentColor: "#586472",
+          glowColor: "rgba(62, 71, 80, 0.85)",
+          realm: "Ashubha (Impure)",
+          state: "Gloom & Grudge · कपट, क्रोध व शोक",
+          icon: "🔘",
+          keywords: "Brooding · Suspicion · Cynicism",
+          comicStory: "Bumped into on the street — furious reaction: grabs shirt, points finger angrily, storms off brooding.",
+          imageSrc: "./images/4.png"
+        },
+        {
+          id: 5,
+          name: "Neel",
+          title: "Neel Leshya",
+          hindi: "नील लेश्या",
+          color: "#06425C",
+          accentColor: "#06425C",
+          glowColor: "rgba(6, 66, 92, 0.85)",
+          realm: "Ashubha (Impure)",
+          state: "Deceit & Envy · ईर्ष्या, आलस्य व हिंसा",
+          icon: "🔵",
+          keywords: "Sloth · Deceit · Jealousy",
+          comicStory: "Bumped into on the street — violent escalation: punches the innocent person down to the pavement.",
+          imageSrc: "./images/5.png"
+        },
+        {
+          id: 6,
+          name: "Krishna",
+          title: "Krishna Leshya",
+          hindi: "कृष्ण लेश्या",
+          color: "#000000",
+          accentColor: "#475569",
+          glowColor: "rgba(50, 50, 50, 0.85)",
+          realm: "Ashubha (Impure)",
+          state: "Wrath & Destruction · महाक्रोध व महाविनाश",
+          icon: "⚫",
+          keywords: "Anger · Cruelty · Malice",
+          comicStory: "Bumped into on the street — deadly malice: stabs the passerby with lethal demonic wrath.",
+          imageSrc: "./images/6.png"
+        }
+      ];
+
+      // State Management
+      let currentLayout = "360_RING"; // "360_RING" or "180_ARC"
+      let badgeTextMode = "BOTH";     // "BOTH", "HINDI", "ENGLISH"
+      let focusedScreenIndex = 0;
+      let screens = [];
+      let experienceStarted = false;
+      const textures = [];
+
+      // Check Secure Context
+      function checkSecureContext() {
+        const isLocal = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+        if (window.location.protocol === "http:" && !isLocal) {
+          const notice = document.querySelector("#ssl-notice");
+          if (notice) notice.classList.remove("hidden");
+          const switchBtn = document.querySelector("#switch-ssl-btn");
+          if (switchBtn) {
+            switchBtn.addEventListener("click", () => {
+              const targetPort = (window.location.port === "8000") ? ":8443" : (window.location.port ? `:${window.location.port}` : "");
+              window.location.href = `https://${window.location.hostname}${targetPort}${window.location.pathname}${window.location.search}`;
+            });
+          }
+        }
+      }
+
+      // iOS Safari Motion & Orientation Permission
+      async function requestDeviceSensors() {
+        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+          try {
+            const res = await DeviceOrientationEvent.requestPermission();
+            if (res === 'granted') {
+              window.dispatchEvent(new Event('deviceorientationpermissiongranted'));
+              return true;
+            }
+          } catch (e) {
+            console.warn("DeviceOrientation permission error:", e);
+          }
+        }
+        return false;
+      }
+
+      // Calculate Layout Transforms for 1:1 Square Images (1755x1755)
+      function getLayoutTransforms(mode) {
+        const transforms = [];
+        const eyeHeight = 1.6;
+
+        if (mode === "360_RING") {
+          const radius = 2.80;
+          const angleStepDeg = 60;
+          const arcAngleRad = angleStepDeg * (Math.PI / 180);
+          const halfStepRad = arcAngleRad * 0.5;
+          const screenWidth = 2 * radius * Math.sin(halfStepRad); // 2.80m
+          // Square 1:1 Aspect Ratio matching 1755x1755 images!
+          const screenHeight = screenWidth; // 2.80m
+          const centerDist = radius * Math.cos(halfStepRad);
+
+          // Dynamic Depth: Zoomed out to fit VR headset FOV so viewer can see 1 Leshya in full without moving head much
+          const focusDist = 3.55;
+          const backDist = 3.95;
+          const focusScale = 0.82;
+          const backScale = 0.70;
+
+          for (let i = 0; i < NUM_SCREENS; i++) {
+            const angleDeg = i * angleStepDeg;
+            const angleRad = angleDeg * (Math.PI / 180);
+            const ux = Math.sin(angleRad);
+            const uz = -Math.cos(angleRad);
+
+            const x = centerDist * ux;
+            const z = centerDist * uz;
+            const y = eyeHeight;
+            const rotY = -angleDeg;
+
+            transforms.push({
+              position: { x, y, z },
+              rotation: { x: 0, y: rotY, z: 0 },
+              width: screenWidth,
+              height: screenHeight,
+              radius,
+              centerDist,
+              arcAngleRad,
+              angleDeg,
+              angleRad,
+              rotYDeg: rotY,
+              radialDir: { x: ux, z: uz },
+              focusDist,
+              backDist,
+              focusScale,
+              backScale,
+              eyeHeight
+            });
+          }
+        } else {
+          // 180_ARC: 6 screens curved in front in a 180° semi-circle
+          const radius = 3.60;
+          const angleStepDeg = 30;
+          const arcAngleRad = angleStepDeg * (Math.PI / 180);
+          const halfStepRad = arcAngleRad * 0.5;
+          const screenWidth = 2 * radius * Math.sin(halfStepRad); // ~1.86m
+          // Square 1:1 Aspect Ratio
+          const screenHeight = screenWidth; // ~1.86m
+          const centerDist = radius * Math.cos(halfStepRad);
+          const startAngleDeg = -((NUM_SCREENS - 1) / 2) * angleStepDeg; // -75 deg
+
+          // Zoomed out to fit VR headset space comfortably
+          const focusDist = 3.30;
+          const backDist = 3.95;
+          const focusScale = 0.88;
+          const backScale = 0.72;
+
+          for (let i = 0; i < NUM_SCREENS; i++) {
+            const angleDeg = startAngleDeg + (i * angleStepDeg);
+            const angleRad = angleDeg * (Math.PI / 180);
+            const ux = Math.sin(angleRad);
+            const uz = -Math.cos(angleRad);
+
+            const x = centerDist * ux;
+            const z = centerDist * uz;
+            const y = eyeHeight;
+            const rotY = -angleDeg;
+
+            transforms.push({
+              position: { x, y, z },
+              rotation: { x: 0, y: rotY, z: 0 },
+              width: screenWidth,
+              height: screenHeight,
+              radius,
+              centerDist,
+              arcAngleRad,
+              angleDeg,
+              angleRad,
+              rotYDeg: rotY,
+              radialDir: { x: ux, z: uz },
+              focusDist,
+              backDist,
+              focusScale,
+              backScale,
+              eyeHeight
+            });
+          }
+        }
+        return transforms;
+      }
+
+      // Curved Screen Geometry for 1:1 Square Images
+      function createCurvedScreenGeometry(t) {
+        const segmentsX = 64;
+        const geo = new THREE.PlaneGeometry(1, t.height, segmentsX, 1);
+        const posAttr = geo.attributes.position;
+        const normAttr = geo.attributes.normal;
+        const uvAttr = geo.attributes.uv;
+
+        for (let k = 0; k < posAttr.count; k++) {
+          const u = uvAttr.getX(k);
+          const y = posAttr.getY(k);
+          const theta = (u - 0.5) * t.arcAngleRad;
+          const vx = t.radius * Math.sin(theta);
+          const vz = t.centerDist - t.radius * Math.cos(theta);
+          posAttr.setXYZ(k, vx, y, vz);
+          normAttr.setXYZ(k, -Math.sin(theta), 0, Math.cos(theta));
+        }
+        posAttr.needsUpdate = true;
+        normAttr.needsUpdate = true;
+        geo.computeBoundingBox();
+        geo.computeBoundingSphere();
+        return geo;
+      }
+
+      // 3D VR Screen Header Badge Dimensions
+      const BADGE_WIDTH = 1.35;
+      const BADGE_HEIGHT = 0.28;
+      const BADGE_MARGIN = 0.08;
+
+      // Curved Cylindrical Geometry for Title Badges
+      function createCurvedBadgeGeometry(t, width = BADGE_WIDTH, height = BADGE_HEIGHT) {
+        const segmentsX = 32;
+        const geo = new THREE.PlaneGeometry(width, height, segmentsX, 1);
+        const posAttr = geo.attributes.position;
+        const normAttr = geo.attributes.normal;
+        const uvAttr = geo.attributes.uv;
+
+        const badgeArcAngle = width / t.radius;
+
+        for (let k = 0; k < posAttr.count; k++) {
+          const u = uvAttr.getX(k);
+          const y = posAttr.getY(k);
+          const theta = (u - 0.5) * badgeArcAngle;
+          const vx = t.radius * Math.sin(theta);
+          const vz = (t.centerDist - t.radius * Math.cos(theta)) + 0.02;
+          posAttr.setXYZ(k, vx, y, vz);
+          normAttr.setXYZ(k, -Math.sin(theta), 0, Math.cos(theta));
+        }
+        posAttr.needsUpdate = true;
+        normAttr.needsUpdate = true;
+        geo.computeBoundingBox();
+        geo.computeBoundingSphere();
+        return geo;
+      }
+
+      function createBadgeCanvas() {
+        const canvas = document.createElement("canvas");
+        canvas.width = 1024;
+        canvas.height = 256;
+        return canvas;
+      }
+
+      // Render Razor-Sharp VR Title Badge (Exactly like other VR, with Hindi name & Leshya color)
+      function drawBadgeCanvas(canvas, meta, isFocused) {
+        const ctx = canvas.getContext("2d");
+        const w = canvas.width;
+        const h = canvas.height;
+        ctx.clearRect(0, 0, w, h);
+
+        const padX = 24;
+        const padY = 24;
+        const cardW = w - padX * 2;
+        const cardH = h - padY * 2;
+        const cardR = 32;
+
+        let bgTop = meta.color;
+        let bgBottom = meta.color;
+        let textColor = "#FFFFFF";
+        let textShadowColor = "rgba(0, 0, 0, 0.85)";
+        let borderColor = "rgba(255, 255, 255, 0.6)";
+        let glowColor = meta.glowColor || meta.color;
+
+        if (meta.color === "#FFFFFF") {
+          // Shukla: Pure White background with high-contrast dark text
+          bgTop = "#FFFFFF";
+          bgBottom = isFocused ? "#FFFFFF" : "#F8FAFC";
+          textColor = "#0F172A";
+          textShadowColor = "transparent";
+          borderColor = isFocused ? "#0284C7" : "#CBD5E1";
+          glowColor = isFocused ? "rgba(2, 132, 199, 0.85)" : "rgba(255, 255, 255, 0.95)";
+        } else if (meta.color === "#FFD700") {
+          // Padma: Golden Yellow background with high-contrast dark text
+          bgTop = "#FFDF00";
+          bgBottom = isFocused ? "#FFD700" : "#F59E0B";
+          textColor = "#0F172A";
+          textShadowColor = "transparent";
+          borderColor = isFocused ? "#FFFFFF" : "#D97706";
+          glowColor = "rgba(255, 215, 0, 0.9)";
+        } else if (meta.color === "#E62E00") {
+          // Tejo: Red background with pure white text
+          bgTop = "#EF4444";
+          bgBottom = isFocused ? "#DC2626" : "#B91C1C";
+          textColor = "#FFFFFF";
+          textShadowColor = "rgba(0, 0, 0, 0.8)";
+          borderColor = isFocused ? "#FFFFFF" : "#FCA5A5";
+          glowColor = "rgba(230, 46, 0, 0.9)";
+        } else if (meta.color === "#3E4750") {
+          // Kapot: Dove Grey background with pure white text
+          bgTop = "#475569";
+          bgBottom = isFocused ? "#334155" : "#1E293B";
+          textColor = "#FFFFFF";
+          textShadowColor = "rgba(0, 0, 0, 0.85)";
+          borderColor = isFocused ? "#FFFFFF" : "#94A3B8";
+          glowColor = "rgba(148, 163, 184, 0.85)";
+        } else if (meta.color === "#06425C") {
+          // Neel: Deep Blue background with pure white text
+          bgTop = "#0284C7";
+          bgBottom = isFocused ? "#0369A1" : "#06425C";
+          textColor = "#FFFFFF";
+          textShadowColor = "rgba(0, 0, 0, 0.85)";
+          borderColor = isFocused ? "#FFFFFF" : "#38BDF8";
+          glowColor = "rgba(56, 189, 248, 0.9)";
+        } else if (meta.color === "#000000") {
+          // Krishna: Pitch Black background with pure white text & crisp border
+          bgTop = "#111827";
+          bgBottom = isFocused ? "#030712" : "#000000";
+          textColor = "#FFFFFF";
+          textShadowColor = "rgba(0, 0, 0, 0.95)";
+          borderColor = isFocused ? "#38BDF8" : "#94A3B8";
+          glowColor = isFocused ? "rgba(56, 189, 248, 0.85)" : "rgba(148, 163, 184, 0.65)";
+        }
+
+        function roundRect(x, y, rw, rh, r) {
+          if (typeof ctx.roundRect === "function") {
+            ctx.beginPath();
+            ctx.roundRect(x, y, rw, rh, r);
+          } else {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + rw - r, y);
+            ctx.quadraticCurveTo(x + rw, y, x + rw, y + r);
+            ctx.lineTo(x + rw, y + rh - r);
+            ctx.quadraticCurveTo(x + rw, y + rh, x + rw - r, y + rh);
+            ctx.lineTo(x + r, y + rh);
+            ctx.quadraticCurveTo(x, y + rh, x, y + rh - r);
+            ctx.lineTo(x, y + r);
+            ctx.quadraticCurveTo(x, y, x + r, y);
+            ctx.closePath();
+          }
+        }
+
+        // 1. Background matching the color of this Leshya
+        const bgGrad = ctx.createLinearGradient(padX, padY, padX, padY + cardH);
+        bgGrad.addColorStop(0, bgTop);
+        bgGrad.addColorStop(1, bgBottom);
+
+        roundRect(padX, padY, cardW, cardH, cardR);
+        ctx.fillStyle = bgGrad;
+        ctx.fill();
+
+        // 2. Defined outer border & subtle glow
+        ctx.save();
+        ctx.shadowColor = glowColor;
+        ctx.shadowBlur = isFocused ? 28 : 14;
+        ctx.lineWidth = isFocused ? 6 : 4;
+        ctx.strokeStyle = borderColor;
+        roundRect(padX, padY, cardW, cardH, cardR);
+        ctx.stroke();
+        ctx.restore();
+
+        // 3. Write number and name just like in other VR (Hindi, English, or Both)
+        ctx.save();
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = textColor;
+        ctx.shadowColor = textShadowColor;
+        ctx.shadowBlur = textShadowColor === "transparent" ? 0 : 12;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 3;
+
+        // 3. Write number and name in BOTH Hindi & English
+        const hindiText = `${meta.id}. ${meta.hindi}`;
+        ctx.font = 'bold 64px "Kohinoor Devanagari", "Noto Sans Devanagari", "Devanagari Sangam MN", "Nirmala UI", -apple-system, BlinkMacSystemFont, sans-serif';
+        ctx.fillText(hindiText, w / 2, h / 2 - 24);
+
+        const engText = `${meta.name} Leshya`;
+        ctx.font = '600 38px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        ctx.fillText(engText, w / 2, h / 2 + 42);
+        ctx.restore();
+      }
+
+      function updateBadgeTexture(i) {
+        const s = screens[i];
+        if (!s || !s.badgeCanvas || !s.badgeTex) return;
+        const isFocused = (focusedScreenIndex === i);
+        drawBadgeCanvas(s.badgeCanvas, s.meta, isFocused);
+        s.badgeTex.needsUpdate = true;
+      }
+
+      function updateAllBadgeTextures() {
+        for (let i = 0; i < screens.length; i++) {
+          updateBadgeTexture(i);
+        }
+      }
+
+      // Preload Textures with Maximum Clarity and Color Accuracy
+      function setupTextures() {
+        const loader = new THREE.TextureLoader();
+        for (let i = 0; i < NUM_SCREENS; i++) {
+          const rawPath = `./images/${i + 1}.png`;
+          const imgDom = document.querySelector(`#img${i + 1}`);
+          const src = (window.LeshyaOfflineEngine && window.LeshyaOfflineEngine.getBlobUrl(rawPath)) || (imgDom && imgDom.src) || rawPath;
+          const tex = loader.load(src, (t) => {
+            t.generateMipmaps = true;
+            t.minFilter = THREE.LinearMipmapLinearFilter;
+            t.magFilter = THREE.LinearFilter;
+            t.wrapS = THREE.ClampToEdgeWrapping;
+            t.wrapT = THREE.ClampToEdgeWrapping;
+            if (THREE.SRGBColorSpace) {
+              t.colorSpace = THREE.SRGBColorSpace;
+            }
+            tex.needsUpdate = true;
+            if (screens[i] && screens[i].screenMat && screens[i].screenMat.uniforms) {
+              screens[i].screenMat.uniforms.uTex.value = t;
+              screens[i].screenMat.needsUpdate = true;
+            }
+          });
+          textures.push(tex);
+        }
+      }
+
+      // Create Custom Depth-of-Field Shader Material
+      // - In Focus: Razor sharp (0 blur), 100% full vibrant true-to-life colors
+      // - In Back: Multi-tap optical soft blur (maintains 100% full brightness, absolutely zero dark tint or dimming)
+      function createScreenImageMaterial(screenIdx, initialFocus = 0.0) {
+        const tex = textures[screenIdx];
+        return new THREE.ShaderMaterial({
+          side: THREE.FrontSide,
+          transparent: false,
+          toneMapped: false,
+          depthWrite: true,
+          depthTest: true,
+          uniforms: {
+            uTex: { value: tex },
+            uFocus: { value: initialFocus },
+            uTexelSize: { value: new THREE.Vector2(1.0 / 1755.0, 1.0 / 1755.0) }
+          },
+          vertexShader: `
+            varying vec2 vUv;
+            void main() {
+              vUv = uv;
+              gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+          `,
+          fragmentShader: `
+            uniform sampler2D uTex;
+            uniform float uFocus;
+            uniform vec2 uTexelSize;
+            varying vec2 vUv;
+
+            void main() {
+              vec3 col;
+              if (uFocus > 0.98) {
+                col = texture2D(uTex, vUv).rgb;
+              } else {
+                // Subtle optical depth-of-field soft blur when in back (weights strictly sum to 1.0, NO dimming)
+                float blurRad = (1.0 - uFocus) * 3.2;
+                vec2 off = uTexelSize * blurRad;
+                vec3 c = texture2D(uTex, vUv).rgb * 0.24;
+                c += texture2D(uTex, vUv + vec2(off.x, 0.0)).rgb * 0.13;
+                c += texture2D(uTex, vUv - vec2(off.x, 0.0)).rgb * 0.13;
+                c += texture2D(uTex, vUv + vec2(0.0, off.y)).rgb * 0.13;
+                c += texture2D(uTex, vUv - vec2(0.0, off.y)).rgb * 0.13;
+                c += texture2D(uTex, vUv + off).rgb * 0.06;
+                c += texture2D(uTex, vUv - off).rgb * 0.06;
+                c += texture2D(uTex, vUv + vec2(off.x, -off.y)).rgb * 0.06;
+                c += texture2D(uTex, vUv + vec2(-off.x, off.y)).rgb * 0.06;
+                col = c;
+              }
+              gl_FragColor = vec4(col, 1.0);
+            }
+          `
+        });
+      }
+
+      // Play celestial scene switch chime using Web Audio API
+      function playSceneSwitchChime() {
+        try {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContextClass) return;
+          if (!audioCtx) audioCtx = new AudioContextClass();
+          if (audioCtx.state === "suspended") audioCtx.resume().catch(() => {});
+          const now = audioCtx.currentTime;
+          const notes = [349.23, 523.25, 698.46, 880.00];
+          notes.forEach((freq, idx) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(freq, now + idx * 0.06);
+            gain.gain.setValueAtTime(0.0001, now + idx * 0.06);
+            gain.gain.exponentialRampToValueAtTime(0.2, now + idx * 0.06 + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.06 + 0.5);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now + idx * 0.06);
+            osc.stop(now + idx * 0.06 + 0.55);
+          });
+        } catch (e) {
+          console.warn("Audio switch chime error:", e);
+        }
+      }
+
+      // Master Action: Restart Experience
+      function handleRestartExperience(source = "button") {
+        playRestartChime();
+
+        const hudRestartSpan = document.querySelector("#hud-bottom-restart-btn span.restart-btn-text");
+        if (hudRestartSpan) hudRestartSpan.textContent = "Restarted ✓";
+
+        // Reset focus to screen 0 (Shukla Leshya)
+        rotateCameraToScreen(0);
+        handleScreenFocus(0);
+
+        showFsToast("🔄 Experience Restarted · Shukla Leshya (1) focused");
+
+        setTimeout(() => {
+          if (hudRestartSpan) hudRestartSpan.textContent = "Restart Experience";
+        }, 2200);
+      }
+
+      // Master Action: Switch to Another VR (Hunger Story)
+      function handleSwitchToOtherVR(source = "button") {
+        playSceneSwitchChime();
+
+        const hudSwitchSpan = document.querySelector("#hud-bottom-switch-btn span.switch-btn-text");
+        if (hudSwitchSpan) hudSwitchSpan.textContent = "Switching VR...";
+
+        const sceneEl = document.querySelector("a-scene");
+        const isVR = (sceneEl && sceneEl.is && sceneEl.is("vr-mode"));
+        const targetUrl = isVR ? "./index.html?mode=vr" : "./index.html?mode=360";
+        showFsToast("🥽 Switching to Hunger VR (6 Video Theater)...");
+
+        setTimeout(() => {
+          window.location.href = targetUrl;
+        }, 450);
+      }
+
+      // Dynamic Center Reticle Pointer Animation (Visual feedback when hovering over interactive targets)
+      function setReticleVisual(state = "idle", colorHex = 0x38bdf8) {
+        const reticleEl = document.querySelector("#gaze-reticle");
+        const dotEl = document.querySelector("#gaze-reticle-dot");
+        if (!reticleEl) return;
+        if (state === "hover") {
+          if (reticleEl.object3D) reticleEl.object3D.scale.set(1.4, 1.4, 1.4);
+          if (dotEl && dotEl.object3D) {
+            dotEl.object3D.traverse((child) => {
+              if (child.isMesh && child.material && child.material.color) {
+                child.material.color.setHex(colorHex);
+              }
+            });
+          }
+        } else {
+          if (reticleEl.object3D) reticleEl.object3D.scale.set(1.0, 1.0, 1.0);
+          if (dotEl && dotEl.object3D) {
+            dotEl.object3D.traverse((child) => {
+              if (child.isMesh && child.material && child.material.color) {
+                child.material.color.setHex(0x38bdf8);
+              }
+            });
+          }
+        }
+      }
+
+      // Build 6 Curved 3D Image Screens + Top Header Badges + Bottom Action Buttons in VR
+      function initScreens() {
+        const wallRig = document.querySelector("#image-wall-rig");
+        const initialTransforms = getLayoutTransforms(currentLayout);
+
+        for (let i = 0; i < NUM_SCREENS; i++) {
+          const t = initialTransforms[i];
+          const isInitialFocused = (i === focusedScreenIndex);
+          const initialFocus = isInitialFocused ? 1.0 : 0.0;
+          const initialDist = isInitialFocused ? t.focusDist : t.backDist;
+          const initialScale = isInitialFocused ? t.focusScale : t.backScale;
+
+          const holder = document.createElement("a-entity");
+          holder.setAttribute("id", `screen-holder-${i}`);
+          holder.setAttribute("position", `${(initialDist * t.radialDir.x).toFixed(3)} ${t.eyeHeight.toFixed(3)} ${(initialDist * t.radialDir.z).toFixed(3)}`);
+          holder.setAttribute("rotation", `0 ${t.rotYDeg.toFixed(2)} 0`);
+
+          // 1. Curved Image Screen Entity with Depth-of-Field Shader (Opaque, 100% full brightness)
+          const imageEntity = document.createElement("a-entity");
+          imageEntity.setAttribute("id", `screen-img-${i}`);
+          imageEntity.setAttribute("class", "vr-clickable");
+
+          const curvedGeo = createCurvedScreenGeometry(t);
+          const screenMat = createScreenImageMaterial(i, initialFocus);
+          const threeImageMesh = new THREE.Mesh(curvedGeo, screenMat);
+          imageEntity.setObject3D("mesh", threeImageMesh);
+
+          // 2. Header Badge Entity on top of each image in VR
+          const headerEntity = document.createElement("a-entity");
+          headerEntity.setAttribute("id", `screen-header-${i}`);
+          headerEntity.setAttribute("class", "vr-clickable");
+
+          const badgeCanvas = createBadgeCanvas();
+          drawBadgeCanvas(badgeCanvas, SCREEN_METADATA[i], isInitialFocused);
+
+          const badgeGeo = createCurvedBadgeGeometry(t);
+          const badgeTex = new THREE.CanvasTexture(badgeCanvas);
+          badgeTex.minFilter = THREE.LinearFilter;
+          badgeTex.magFilter = THREE.LinearFilter;
+          if (THREE.SRGBColorSpace) {
+            badgeTex.colorSpace = THREE.SRGBColorSpace;
+          }
+          const badgeMat = new THREE.MeshBasicMaterial({
+            map: badgeTex,
+            transparent: true,
+            side: THREE.DoubleSide,
+            depthTest: true,
+            depthWrite: false
+          });
+          const threeHeaderMesh = new THREE.Mesh(badgeGeo, badgeMat);
+          headerEntity.setObject3D("mesh", threeHeaderMesh);
+
+          // Position badge directly on top of the image
+          const badgeY = (t.height / 2) + BADGE_HEIGHT / 2 + BADGE_MARGIN;
+          headerEntity.setAttribute("position", `0 ${badgeY.toFixed(3)} 0`);
+
+          // Click / Reticle Selection: Brings clicked screen forward into focus and smoothly turns camera
+          imageEntity.addEventListener("click", () => {
+            rotateCameraToScreen(i);
+          });
+          headerEntity.addEventListener("click", () => {
+            rotateCameraToScreen(i);
+          });
+
+          holder.appendChild(imageEntity);
+          holder.appendChild(headerEntity);
+          wallRig.appendChild(holder);
+
+          // Apply initial scale directly on Three.js object
+          if (holder.object3D) {
+            holder.object3D.scale.set(initialScale, initialScale, initialScale);
+          }
+
+          screens.push({
+            holder,
+            imageEntity,
+            threeImageMesh,
+            screenMat,
+            headerEntity,
+            threeHeaderMesh,
+            badgeCanvas,
+            badgeTex,
+            badgeMat,
+            meta: SCREEN_METADATA[i],
+            focusFactor: initialFocus,
+            targetFocus: initialFocus,
+            focusDist: t.focusDist,
+            backDist: t.backDist,
+            focusScale: t.focusScale,
+            backScale: t.backScale,
+            radialDir: t.radialDir,
+            angleDeg: t.angleDeg,
+            rotYDeg: t.rotYDeg,
+            baseY: t.eyeHeight,
+            currentTransform: { ...t }
+          });
+        }
+      }
+
+      // Smooth Camera Rotation Helper to Center Focused Screen
+      function rotateCameraToScreen(screenIdx) {
+        if (screenIdx < 0 || screenIdx >= screens.length) return;
+        const s = screens[screenIdx];
+        if (!s) return;
+
+        const cameraEl = document.querySelector("#main-camera");
+        if (cameraEl) {
+          const rotYDeg = s.rotYDeg;
+          const degToRad = Math.PI / 180;
+          const lookControls = cameraEl.components && cameraEl.components["look-controls"];
+
+          if (lookControls && lookControls.yawObject && lookControls.pitchObject) {
+            lookControls.yawObject.rotation.y = rotYDeg * degToRad;
+            lookControls.pitchObject.rotation.x = 0;
+          } else if (cameraEl.object3D) {
+            cameraEl.object3D.rotation.y = rotYDeg * degToRad;
+            cameraEl.object3D.rotation.x = 0;
+          }
+        }
+
+        handleScreenFocus(screenIdx);
+      }
+
+      // Smooth Layout Transition (360 Ring <-> 180 Arc)
+      function applyLayout(mode) {
+        currentLayout = mode;
+        const targetTransforms = getLayoutTransforms(mode);
+
+        screens.forEach((s, idx) => {
+          const t = targetTransforms[idx];
+
+          s.focusDist = t.focusDist;
+          s.backDist = t.backDist;
+          s.focusScale = t.focusScale;
+          s.backScale = t.backScale;
+          s.radialDir = t.radialDir;
+          s.angleDeg = t.angleDeg;
+          s.rotYDeg = t.rotYDeg;
+          s.baseY = t.eyeHeight;
+
+          if (s.threeImageMesh) {
+            const oldGeo = s.threeImageMesh.geometry;
+            s.threeImageMesh.geometry = createCurvedScreenGeometry(t);
+            if (oldGeo) oldGeo.dispose();
+          }
+
+          if (s.threeHeaderMesh) {
+            const oldBadgeGeo = s.threeHeaderMesh.geometry;
+            s.threeHeaderMesh.geometry = createCurvedBadgeGeometry(t);
+            if (oldBadgeGeo) oldBadgeGeo.dispose();
+
+            const badgeY = (t.height / 2) + BADGE_HEIGHT / 2 + BADGE_MARGIN;
+            s.headerEntity.setAttribute("position", `0 ${badgeY.toFixed(3)} 0`);
+          }
+
+          s.holder.setAttribute("rotation", `0 ${t.rotYDeg.toFixed(2)} 0`);
+          s.currentTransform = { ...t };
+        });
+
+        // Update UI Label
+        const label = document.querySelector("#layout-label");
+        if (label) {
+          label.textContent = (mode === "360_RING") ? "360° Ring" : "180° Arc";
+        }
+      }
+
+      function toggleLayout() {
+        const nextMode = currentLayout === "360_RING" ? "180_ARC" : "360_RING";
+        applyLayout(nextMode);
+      }
+
+      // Handle Screen Focus / Gaze Selection
+      function handleScreenFocus(index) {
+        if (index < 0 || index >= NUM_SCREENS) return;
+        const prevIndex = focusedScreenIndex;
+        focusedScreenIndex = index;
+
+        // Update badge states
+        if (prevIndex !== index) {
+          updateBadgeTexture(prevIndex);
+          updateBadgeTexture(index);
+        }
+
+        // Update 2D Bottom Info Card
+        const meta = SCREEN_METADATA[index];
+        const colorBadge = document.querySelector("#focus-badge-color");
+        const titleEl = document.querySelector("#focus-title-text");
+        const descEl = document.querySelector("#focus-desc-text");
+
+        if (colorBadge) {
+          colorBadge.textContent = meta.icon;
+          colorBadge.style.background = meta.color;
+          colorBadge.style.color = (meta.color === "#FFFFFF" || meta.color === "#FFD700") ? "#0f172a" : "#ffffff";
+        }
+        if (titleEl) {
+          titleEl.innerHTML = `${meta.id}. ${meta.hindi} (${meta.name} Leshya) <span class="focus-pill-tag">✨ In Focus</span>`;
+        }
+        if (descEl) {
+          descEl.textContent = `${meta.state} · ${meta.keywords}`;
+        }
+
+        // Play gentle harmonic tone for this Leshya
+        playHarmonicChime(index);
+      }
+
+      // Procedural Web Audio Harmonic Tone for Soul Atmosphere
+      let audioCtx = null;
+      function playHarmonicChime(index) {
+        try {
+          if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          }
+          if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+          }
+
+          const freqs = [880, 659.25, 440, 329.63, 220, 110]; // Shukla down to Krishna
+          const f = freqs[index] || 440;
+
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+
+          osc.type = index < 3 ? "sine" : "triangle";
+          osc.frequency.setValueAtTime(f, audioCtx.currentTime);
+
+          gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.2);
+
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+
+          osc.start();
+          osc.stop(audioCtx.currentTime + 1.25);
+        } catch (e) {}
+      }
+
+      // Floor Nadir Scene Selector & Controller Dial (Interactive 3D Portal on floor)
+      const IS_VIDEO_THEATER = false;
+      const NADIR_RADIUS = 0.95;
+      const NADIR_ACTIVATION_RADIUS_SQ = 1.25 * 1.25;
+      const NADIR_DWELL_MS = 1400;
+      let orientationCooldownUntil = 0;
+      let nadirGroup = null;
+      let nadirCanvas = null;
+      let nadirCtx = null;
+      let nadirTex = null;
+      let nadirDiscMesh = null;
+      let nadirHaloMesh = null;
+      const nadirHitLocalVec = new THREE.Vector3();
+      const nadirDwellState = {
+        active: false,
+        startTime: 0,
+        targetZone: null, // "hunger" | "anger"
+        triggered: false,
+        lastProgress: 0,
+        lastHorizontalYaw: 0
+      };
+      let isRestartModalOpen = false;
+      let toastTimer = null;
+
+      function showFsToast(msg) {
+        const toast = document.querySelector("#fs-toast");
+        const toastText = document.querySelector("#fs-toast-text");
+        if (!toast || !toastText) return;
+        toastText.textContent = msg;
+        toast.classList.remove("hidden");
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          toast.classList.add("hidden");
+        }, 3200);
+      }
+
+      function playRestartChime() {
+        try {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContextClass) return;
+          if (!audioCtx) audioCtx = new AudioContextClass();
+          if (audioCtx.state === "suspended") {
+            audioCtx.resume().catch(() => {});
+          }
+
+          const now = audioCtx.currentTime;
+          const notes = [523.25, 659.25, 783.99, 1046.50];
+          notes.forEach((freq, idx) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(freq, now + idx * 0.07);
+
+            gain.gain.setValueAtTime(0.0001, now + idx * 0.07);
+            gain.gain.exponentialRampToValueAtTime(0.18, now + idx * 0.07 + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.07 + 0.45);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.start(now + idx * 0.07);
+            osc.stop(now + idx * 0.07 + 0.5);
+          });
+        } catch (e) {
+          console.warn("Audio chime error:", e);
+        }
+      }
+
+      function drawRestartIcon(ctx, cx, cy, r, color, lineWidth = 16) {
+        ctx.save();
+        ctx.strokeStyle = color;
+        ctx.fillStyle = color;
+        ctx.lineWidth = lineWidth;
+        ctx.lineCap = "round";
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0.55 * Math.PI, 1.95 * Math.PI, false);
+        ctx.stroke();
+
+        const tip1X = cx + r * Math.cos(1.95 * Math.PI);
+        const tip1Y = cy + r * Math.sin(1.95 * Math.PI);
+        ctx.beginPath();
+        ctx.moveTo(tip1X + 22, tip1Y - 12);
+        ctx.lineTo(tip1X, tip1Y);
+        ctx.lineTo(tip1X + 4, tip1Y + 24);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 1.55 * Math.PI, 0.95 * Math.PI, false);
+        ctx.stroke();
+
+        const tip2X = cx + r * Math.cos(0.95 * Math.PI);
+        const tip2Y = cy + r * Math.sin(0.95 * Math.PI);
+        ctx.beginPath();
+        ctx.moveTo(tip2X - 22, tip2Y + 12);
+        ctx.lineTo(tip2X, tip2Y);
+        ctx.lineTo(tip2X - 4, tip2Y - 24);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      function drawCheckmarkIcon(ctx, cx, cy, size, color, lineWidth = 20) {
+        ctx.save();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = lineWidth;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.shadowColor = "rgba(16, 185, 129, 0.85)";
+        ctx.shadowBlur = 20;
+
+        ctx.beginPath();
+        ctx.moveTo(cx - size * 0.45, cy + size * 0.05);
+        ctx.lineTo(cx - size * 0.1, cy + size * 0.4);
+        ctx.lineTo(cx + size * 0.45, cy - size * 0.35);
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      // Render crisp, high-resolution canvas texture for the floor nadir scene selector & controller dial
+      function drawNadirCanvas(progress = 0, activeZone = null, isFinished = false, finishedStory = null) {
+        if (!nadirCtx || !nadirCanvas) return;
+        const ctx = nadirCtx;
+        const w = nadirCanvas.width; // 1024
+        const h = nadirCanvas.height; // 1024
+        const cx = w * 0.5; // 512
+        const cy = h * 0.5; // 512
+        const r = 460;
+
+        ctx.clearRect(0, 0, w, h);
+
+        // Success / Loaded state (shows for ~2s after switching or restarting)
+        if (isFinished) {
+          const isHunger = (finishedStory === "hunger");
+          const bgGrad = ctx.createRadialGradient(cx, cy, 60, cx, cy, r);
+          bgGrad.addColorStop(0, isHunger ? "rgba(245, 158, 11, 0.95)" : "rgba(239, 68, 68, 0.95)");
+          bgGrad.addColorStop(0.55, isHunger ? "rgba(180, 83, 9, 0.92)" : "rgba(185, 28, 28, 0.92)");
+          bgGrad.addColorStop(1, "rgba(15, 23, 42, 0.98)");
+
+          ctx.beginPath();
+          ctx.arc(cx, cy, r, 0, Math.PI * 2);
+          ctx.fillStyle = bgGrad;
+          ctx.fill();
+
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(cx, cy, r, 0, Math.PI * 2);
+          ctx.strokeStyle = isHunger ? "#fbbf24" : "#ef4444";
+          ctx.lineWidth = 20;
+          ctx.shadowColor = isHunger ? "rgba(251, 191, 36, 0.95)" : "rgba(239, 68, 68, 0.95)";
+          ctx.shadowBlur = 32;
+          ctx.stroke();
+          ctx.restore();
+
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.font = 'bold 44px system-ui, -apple-system, sans-serif';
+          ctx.fillStyle = "#ffffff";
+          ctx.fillText(isHunger ? "1. Hunger Story" : "2. Anger Story", cx, 512);
+
+          if (nadirTex) nadirTex.needsUpdate = true;
+          return;
+        }
+
+        // Base Disc Background (Deep Cosmic Slate)
+        const bgGrad = ctx.createRadialGradient(cx, cy, 80, cx, cy, r);
+        bgGrad.addColorStop(0, "rgba(30, 41, 59, 0.96)");
+        bgGrad.addColorStop(0.65, "rgba(15, 23, 42, 0.97)");
+        bgGrad.addColorStop(1, "rgba(2, 6, 23, 0.99)");
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.fillStyle = bgGrad;
+        ctx.fill();
+
+        // Outer Ring Rim
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.strokeStyle = (activeZone ? "rgba(56, 189, 248, 0.85)" : "rgba(56, 189, 248, 0.4)");
+        ctx.lineWidth = (activeZone ? 10 : 6);
+        ctx.stroke();
+
+        // Top Header Banner
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.font = 'bold 38px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        ctx.fillStyle = "#ffffff";
+        ctx.shadowColor = "rgba(0, 0, 0, 0.6)";
+        ctx.shadowBlur = 10;
+        ctx.fillText("Look at the button to Select", cx, 175);
+        ctx.shadowBlur = 0;
+
+        // Center Dividing Axis
+        ctx.beginPath();
+        ctx.moveTo(cx, 230);
+        ctx.lineTo(cx, 750);
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // -------------------------------------------------------------
+        // LEFT CARD: 1. Hunger Story
+        // -------------------------------------------------------------
+        const isLeftActive = (activeZone === "hunger");
+        const leftX = cx - 410;
+        const cardY = 240;
+        const cardW = 380;
+        const cardH = 490;
+        const cornerR = 24;
+
+        ctx.save();
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(leftX, cardY, cardW, cardH, cornerR);
+        else ctx.rect(leftX, cardY, cardW, cardH);
+
+        if (isLeftActive) {
+          ctx.fillStyle = "rgba(245, 158, 11, 0.28)";
+          ctx.fill();
+          ctx.strokeStyle = "#fbbf24";
+          ctx.lineWidth = 8;
+          ctx.shadowColor = "rgba(251, 191, 36, 0.9)";
+          ctx.shadowBlur = 24;
+          ctx.stroke();
+        } else {
+          ctx.fillStyle = "rgba(30, 41, 59, 0.65)";
+          ctx.fill();
+          ctx.strokeStyle = "rgba(245, 158, 11, 0.45)";
+          ctx.lineWidth = 4;
+          ctx.stroke();
+        }
+        ctx.restore();
+
+        // Left Card Content
+        const leftMidX = leftX + cardW / 2;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        ctx.font = 'bold 36px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        ctx.fillStyle = isLeftActive ? "#ffffff" : "#fbbf24";
+        ctx.fillText("1. Hunger Story", leftMidX, cardY + 125);
+
+        // Action Button inside Left Card
+        const leftActionText = IS_VIDEO_THEATER ? "Restart Story" : "Switch Story";
+        const btnW = 280;
+        const btnH = 76;
+        const leftBtnX = leftMidX - btnW / 2;
+        const btnY = cardY + 230;
+
+        ctx.save();
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(leftBtnX, btnY, btnW, btnH, 18);
+        else ctx.rect(leftBtnX, btnY, btnW, btnH);
+        ctx.fillStyle = isLeftActive ? "#f59e0b" : "rgba(245, 158, 11, 0.25)";
+        ctx.fill();
+        ctx.strokeStyle = "#f59e0b";
+        ctx.lineWidth = 3.5;
+        if (isLeftActive) {
+          ctx.shadowColor = "rgba(245, 158, 11, 0.85)";
+          ctx.shadowBlur = 20;
+        }
+        ctx.stroke();
+        ctx.font = 'bold 28px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        ctx.fillStyle = isLeftActive ? "#000000" : "#ffffff";
+        ctx.fillText(leftActionText, leftMidX, btnY + btnH / 2);
+        ctx.restore();
+
+        // Progress Gauge if Left Active
+        if (isLeftActive && progress > 0) {
+          const barW = 260;
+          const barH = 14;
+          const barX = leftMidX - barW / 2;
+          const barY = cardY + 360;
+          ctx.save();
+          ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+          ctx.beginPath();
+          if (ctx.roundRect) ctx.roundRect(barX, barY, barW, barH, 8);
+          else ctx.rect(barX, barY, barW, barH);
+          ctx.fill();
+
+          ctx.fillStyle = "#fbbf24";
+          ctx.shadowColor = "#fbbf24";
+          ctx.shadowBlur = 12;
+          ctx.beginPath();
+          if (ctx.roundRect) ctx.roundRect(barX, barY, Math.max(10, barW * progress), barH, 8);
+          else ctx.rect(barX, barY, barW * progress, barH);
+          ctx.fill();
+          ctx.restore();
+        }
+
+        // -------------------------------------------------------------
+        // RIGHT CARD: 2. Anger Story
+        // -------------------------------------------------------------
+        const isRightActive = (activeZone === "anger");
+        const rightX = cx + 30;
+        const rightMidX = rightX + cardW / 2;
+
+        ctx.save();
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(rightX, cardY, cardW, cardH, cornerR);
+        else ctx.rect(rightX, cardY, cardW, cardH);
+
+        if (isRightActive) {
+          ctx.fillStyle = "rgba(239, 68, 68, 0.28)";
+          ctx.fill();
+          ctx.strokeStyle = "#f87171";
+          ctx.lineWidth = 8;
+          ctx.shadowColor = "rgba(248, 113, 113, 0.9)";
+          ctx.shadowBlur = 24;
+          ctx.stroke();
+        } else {
+          ctx.fillStyle = "rgba(30, 41, 59, 0.65)";
+          ctx.fill();
+          ctx.strokeStyle = "rgba(239, 68, 68, 0.45)";
+          ctx.lineWidth = 4;
+          ctx.stroke();
+        }
+        ctx.restore();
+
+        // Right Card Content
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        ctx.font = 'bold 36px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        ctx.fillStyle = isRightActive ? "#ffffff" : "#f87171";
+        ctx.fillText("2. Anger Story", rightMidX, cardY + 125);
+
+        // Action Button inside Right Card
+        const rightActionText = IS_VIDEO_THEATER ? "Switch Story" : "Restart Story";
+        const rightBtnX = rightMidX - btnW / 2;
+
+        ctx.save();
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(rightBtnX, btnY, btnW, btnH, 18);
+        else ctx.rect(rightBtnX, btnY, btnW, btnH);
+        ctx.fillStyle = isRightActive ? "#ef4444" : "rgba(239, 68, 68, 0.25)";
+        ctx.fill();
+        ctx.strokeStyle = "#ef4444";
+        ctx.lineWidth = 3.5;
+        if (isRightActive) {
+          ctx.shadowColor = "rgba(239, 68, 68, 0.85)";
+          ctx.shadowBlur = 20;
+        }
+        ctx.stroke();
+        ctx.font = 'bold 28px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        ctx.fillStyle = isRightActive ? "#ffffff" : "#ffffff";
+        ctx.fillText(rightActionText, rightMidX, btnY + btnH / 2);
+        ctx.restore();
+
+        // Progress Gauge if Right Active
+        if (isRightActive && progress > 0) {
+          const barW = 260;
+          const barH = 14;
+          const barX = rightMidX - barW / 2;
+          const barY = cardY + 360;
+          ctx.save();
+          ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+          ctx.beginPath();
+          if (ctx.roundRect) ctx.roundRect(barX, barY, barW, barH, 8);
+          else ctx.rect(barX, barY, barW, barH);
+          ctx.fill();
+
+          ctx.fillStyle = "#f87171";
+          ctx.shadowColor = "#f87171";
+          ctx.shadowBlur = 12;
+          ctx.beginPath();
+          if (ctx.roundRect) ctx.roundRect(barX, barY, Math.max(10, barW * progress), barH, 8);
+          else ctx.rect(barX, barY, barW * progress, barH);
+          ctx.fill();
+          ctx.restore();
+        }
+
+        if (nadirTex) nadirTex.needsUpdate = true;
+      }
+
+      function initNadirRestartPortal() {
+        const container = document.querySelector("#nadir-restart-rig");
+        const sceneEl = document.querySelector("a-scene");
+        if (!container || !sceneEl) return;
+
+        nadirGroup = new THREE.Group();
+        nadirGroup.position.set(0, 0.045, 0);
+
+        nadirCanvas = document.createElement("canvas");
+        nadirCanvas.width = 1024;
+        nadirCanvas.height = 1024;
+        nadirCtx = nadirCanvas.getContext("2d");
+
+        nadirTex = new THREE.CanvasTexture(nadirCanvas);
+        nadirTex.minFilter = THREE.LinearFilter;
+        nadirTex.magFilter = THREE.LinearFilter;
+        if (THREE.SRGBColorSpace) {
+          nadirTex.colorSpace = THREE.SRGBColorSpace;
+        }
+
+        const discGeo = new THREE.CircleGeometry(NADIR_RADIUS, 64);
+        discGeo.rotateX(-Math.PI / 2);
+        const discMat = new THREE.MeshBasicMaterial({
+          map: nadirTex,
+          transparent: true,
+          side: THREE.FrontSide,
+          depthWrite: false,
+          depthTest: true
+        });
+        nadirDiscMesh = new THREE.Mesh(discGeo, discMat);
+        nadirGroup.add(nadirDiscMesh);
+
+        const haloGeo = new THREE.RingGeometry(NADIR_RADIUS + 0.02, NADIR_RADIUS + 0.22, 64);
+        haloGeo.rotateX(-Math.PI / 2);
+        const haloMat = new THREE.MeshBasicMaterial({
+          color: 0x38bdf8,
+          transparent: true,
+          opacity: 0.45,
+          side: THREE.DoubleSide,
+          depthWrite: false,
+          depthTest: true
+        });
+        nadirHaloMesh = new THREE.Mesh(haloGeo, haloMat);
+        nadirGroup.add(nadirHaloMesh);
+
+        container.setObject3D("mesh", nadirGroup);
+
+        drawNadirCanvas(0.0, null, false, null);
+
+        container.addEventListener("click", (evt) => {
+          let intersectPoint = evt.detail && evt.detail.intersection ? evt.detail.intersection.point : null;
+          if (!intersectPoint && evt.intersection) intersectPoint = evt.intersection.point;
+
+          if (intersectPoint && nadirGroup) {
+            nadirGroup.updateMatrixWorld(true);
+            nadirHitLocalVec.copy(intersectPoint);
+            nadirGroup.worldToLocal(nadirHitLocalVec);
+            if (nadirHitLocalVec.x < 0) {
+              selectStory("hunger");
+              return;
+            } else {
+              selectStory("anger");
+              return;
+            }
+          }
+
+          if (nadirDwellState.targetZone === "hunger") {
+            selectStory("hunger");
+          } else if (nadirDwellState.targetZone === "anger") {
+            selectStory("anger");
+          } else {
+            openRestartModal();
+          }
+        });
+      }
+
+      function openRestartModal() {
+        isRestartModalOpen = true;
+        const modal = document.querySelector("#restart-modal");
+        if (modal) {
+          modal.classList.remove("hidden");
+        }
+        drawNadirCanvas(0.0, null, false, null);
+      }
+
+      function closeRestartModal() {
+        isRestartModalOpen = false;
+        const modal = document.querySelector("#restart-modal");
+        if (modal) {
+          modal.classList.add("hidden");
+        }
+        drawNadirCanvas(0.0, null, false, null);
+      }
+
+      function selectStory(storyKey) {
+        closeRestartModal();
+        if (storyKey === "hunger") {
+          loadHungerStory();
+        } else if (storyKey === "anger") {
+          loadAngerStory();
+        }
+      }
+
+      function loadHungerStory() {
+        playRestartChime();
+        drawNadirCanvas(1.0, null, true, "hunger");
+        showFsToast("🍲 Loading 1: Hunger Story (Tree Parable in VR)...");
+
+        const sceneEl = document.querySelector("a-scene");
+        const isVR = (sceneEl && sceneEl.is && sceneEl.is("vr-mode")) || document.body.classList.contains("stereo-vr-active");
+        const targetUrl = isVR ? "./index.html?mode=vr" : "./index.html?mode=360";
+
+        setTimeout(() => {
+          window.location.href = targetUrl;
+        }, 350);
+      }
+
+      function loadAngerStory() {
+        playRestartChime();
+        rotateCameraToScreen(0);
+        handleScreenFocus(0);
+
+        drawNadirCanvas(1.0, null, true, "anger");
+        showFsToast("🔥 2: Anger Story (Street Parable) reloaded · Shukla Leshya (1) focused");
+
+        setTimeout(() => {
+          if (!nadirDwellState.active && !isRestartModalOpen) {
+            drawNadirCanvas(0.0, null, false, null);
+          }
+        }, 2200);
+      }
+
+      // Main Animation & Gaze Depth-of-Field Engine
+      const forwardDir = new THREE.Vector3();
+      const gazeDir = new THREE.Vector3();
+      const camWorldPos = new THREE.Vector3();
+      let lastGazeCheckTime = 0;
+      let lastTickTime = 0;
+
+      function tick(time) {
+        const cameraEl = document.querySelector("#main-camera");
+
+        let dt = 0.016;
+        if (lastTickTime > 0) {
+          dt = Math.min(0.1, (time - lastTickTime) / 1000);
+        }
+        lastTickTime = time;
+
+        // Smooth Arrow Key Camera Rotation (Left / Right / Up / Down)
+        if (pressedArrowKeys.size > 0) {
+          const turnSpeedDeg = 95;
+          let yawDelta = 0;
+          let pitchDelta = 0;
+          if (pressedArrowKeys.has("ArrowLeft")) yawDelta += turnSpeedDeg * dt;
+          if (pressedArrowKeys.has("ArrowRight")) yawDelta -= turnSpeedDeg * dt;
+          if (pressedArrowKeys.has("ArrowUp")) pitchDelta += turnSpeedDeg * dt;
+          if (pressedArrowKeys.has("ArrowDown")) pitchDelta -= turnSpeedDeg * dt;
+
+          if (yawDelta !== 0 || pitchDelta !== 0) {
+            rotateCamera(yawDelta, pitchDelta);
+          }
+        }
+
+        // Orient nadir dais horizontally towards user's gaze direction so it is always upright when looking down
+        if (cameraEl && cameraEl.object3D && nadirGroup) {
+          cameraEl.object3D.getWorldDirection(gazeDir);
+          gazeDir.negate();
+          if (gazeDir.y > -0.65) {
+            nadirDwellState.lastHorizontalYaw = Math.atan2(-gazeDir.x, -gazeDir.z);
+            nadirGroup.rotation.y = nadirDwellState.lastHorizontalYaw;
+          }
+        }
+
+        // Check if user is looking down at the Nadir Scene Switcher on the floor
+        let isNadirFocusedNow = false;
+        let detectedNadirZone = null;
+        const nowTime = performance.now();
+        if (nowTime >= orientationCooldownUntil && cameraEl && cameraEl.object3D && nadirGroup) {
+          cameraEl.object3D.getWorldDirection(gazeDir);
+          gazeDir.negate();
+          cameraEl.object3D.getWorldPosition(camWorldPos);
+
+          if (gazeDir.y < -0.65) {
+            const tFloor = (0.045 - camWorldPos.y) / gazeDir.y;
+            if (tFloor > 0) {
+              const hitX = camWorldPos.x + gazeDir.x * tFloor;
+              const hitZ = camWorldPos.z + gazeDir.z * tFloor;
+              const hitDistSq = (hitX - nadirGroup.position.x) ** 2 + (hitZ - nadirGroup.position.z) ** 2;
+              if (hitDistSq <= NADIR_ACTIVATION_RADIUS_SQ) {
+                isNadirFocusedNow = true;
+                nadirGroup.updateMatrixWorld(true);
+                nadirHitLocalVec.set(hitX, 0.045, hitZ);
+                nadirGroup.worldToLocal(nadirHitLocalVec);
+                if (nadirHitLocalVec.x < -0.06) {
+                  detectedNadirZone = "hunger";
+                } else if (nadirHitLocalVec.x > 0.06) {
+                  detectedNadirZone = "anger";
+                } else {
+                  detectedNadirZone = "center";
+                }
+              }
+            }
+          }
+        }
+
+        if (isNadirFocusedNow) {
+          if (detectedNadirZone === "hunger" || detectedNadirZone === "anger") {
+            setReticleVisual("hover", detectedNadirZone === "hunger" ? 0xfbbf24 : 0xef4444);
+            if (nadirDwellState.targetZone !== detectedNadirZone) {
+              nadirDwellState.active = true;
+              nadirDwellState.targetZone = detectedNadirZone;
+              nadirDwellState.startTime = performance.now();
+              nadirDwellState.lastProgress = 0.01;
+              nadirDwellState.triggered = false;
+              drawNadirCanvas(0.01, detectedNadirZone, false, null);
+            } else if (!nadirDwellState.triggered) {
+              const elapsed = performance.now() - nadirDwellState.startTime;
+              const progress = Math.min(1.0, elapsed / NADIR_DWELL_MS);
+              if (Math.abs(progress - nadirDwellState.lastProgress) > 0.02) {
+                nadirDwellState.lastProgress = progress;
+                drawNadirCanvas(progress, detectedNadirZone, false, null);
+              }
+              if (progress >= 1.0) {
+                nadirDwellState.triggered = true;
+                nadirDwellState.active = false;
+                if (detectedNadirZone === "hunger") {
+                  loadHungerStory();
+                } else if (detectedNadirZone === "anger") {
+                  loadAngerStory();
+                }
+              }
+            }
+          } else {
+            setReticleVisual("hover", 0x38bdf8);
+            if (nadirDwellState.active && !nadirDwellState.triggered) {
+              nadirDwellState.active = false;
+              nadirDwellState.targetZone = null;
+              nadirDwellState.lastProgress = 0;
+              drawNadirCanvas(0.0, null, false, null);
+            }
+          }
+        } else {
+          if (nadirDwellState.active || nadirDwellState.triggered) {
+            nadirDwellState.active = false;
+            nadirDwellState.triggered = false;
+            nadirDwellState.targetZone = null;
+            nadirDwellState.lastProgress = 0;
+            setReticleVisual("idle");
+            if (!isRestartModalOpen) {
+              drawNadirCanvas(0.0, null, false, null);
+            }
+          }
+        }
+
+        // 1. Gaze Direction Check: Detects which image the user is currently looking at
+        if (!isNadirFocusedNow && cameraEl && cameraEl.object3D && experienceStarted && (time - lastGazeCheckTime > 25)) {
+          lastGazeCheckTime = time;
+          cameraEl.object3D.getWorldDirection(forwardDir);
+
+          let bestIdx = -1;
+          let maxDot = -Infinity;
+
+          for (let i = 0; i < screens.length; i++) {
+            const s = screens[i];
+            // In Three.js, camera forward direction is -Z
+            const dot = -forwardDir.x * s.radialDir.x - forwardDir.z * s.radialDir.z;
+            if (dot > maxDot) {
+              maxDot = dot;
+              bestIdx = i;
+            }
+          }
+
+          if (bestIdx >= 0 && maxDot > 0.50 && bestIdx !== focusedScreenIndex) {
+            handleScreenFocus(bestIdx);
+          }
+        }
+
+        // 2. Continuous Fluid 3D Position, Scale, Blur, and Opacity Interpolation
+        for (let i = 0; i < screens.length; i++) {
+          const s = screens[i];
+          const isTarget = (i === focusedScreenIndex);
+          const target = isTarget ? 1.0 : 0.0;
+
+          // Smooth interpolation factor
+          s.focusFactor += (target - s.focusFactor) * 0.085;
+
+          // Depth: Moves forward towards viewer when in focus; recedes back when not in focus
+          const curDist = THREE.MathUtils.lerp(s.backDist, s.focusDist, s.focusFactor);
+          // Scale: 0.82x foreground focus scale vs 0.70x background receded scale (fits VR headset FOV)
+          const curScale = THREE.MathUtils.lerp(s.backScale, s.focusScale, s.focusFactor);
+
+          if (s.holder && s.holder.object3D) {
+            s.holder.object3D.position.x = curDist * s.radialDir.x;
+            s.holder.object3D.position.y = s.baseY;
+            s.holder.object3D.position.z = curDist * s.radialDir.z;
+
+            s.holder.object3D.scale.set(curScale, curScale, curScale);
+          }
+
+          // Shader Depth-of-Field Blur & Dimming
+          if (s.screenMat && s.screenMat.uniforms && s.screenMat.uniforms.uFocus) {
+            s.screenMat.uniforms.uFocus.value = s.focusFactor;
+          }
+        }
+
+        requestAnimationFrame(tick);
+      }
+
+      // Comic Inspection Modal
+      let modalIndex = 0;
+      function openInspectModal(index) {
+        modalIndex = index;
+        const modal = document.querySelector("#inspect-modal");
+        const img = document.querySelector("#modal-image");
+        const title = document.querySelector("#modal-header-title");
+        const desc = document.querySelector("#modal-desc");
+        const meta = SCREEN_METADATA[index];
+
+        if (img) img.src = meta.imageSrc;
+        if (title) title.textContent = `${meta.id}. ${meta.hindi} · ${meta.name} Leshya`;
+        if (desc) desc.textContent = meta.comicStory;
+
+        if (modal) modal.classList.add("active");
+      }
+
+      function closeInspectModal() {
+        const modal = document.querySelector("#inspect-modal");
+        if (modal) modal.classList.remove("active");
+      }
+
+      function nextModalImage(delta) {
+        modalIndex = (modalIndex + delta + NUM_SCREENS) % NUM_SCREENS;
+        openInspectModal(modalIndex);
+      }
+
+      // Asynchronously pre-query WebXR immersive-vr support so click handlers can synchronously launch VR without awaiting
+      let isImmersiveVRSupported = false;
+      if (navigator.xr && typeof navigator.xr.isSessionSupported === "function") {
+        navigator.xr.isSessionSupported("immersive-vr").then((supported) => {
+          isImmersiveVRSupported = !!supported;
+        }).catch(() => {
+          isImmersiveVRSupported = false;
+        });
+      }
+
+      // Dual-Eye Stereo Split-Screen Renderer (2 Side-by-Side Squares for Left & Right Eyes)
+      let stereoSplitActive = false;
+      let stereoCamera = null;
+      const rendererSize = new THREE.Vector2();
+
+      function setupStereoRenderer() {
+        const sceneEl = document.querySelector("a-scene");
+        if (!sceneEl || !sceneEl.renderer) return;
+        const renderer = sceneEl.renderer;
+
+        if (!stereoCamera) {
+          stereoCamera = new THREE.StereoCamera();
+          stereoCamera.aspect = 0.5;
+          stereoCamera.eyeSep = 0.064; // Standard 64mm human interpupillary distance
+        }
+
+        if (renderer._stereoHooked) return;
+        renderer._stereoHooked = true;
+
+        const origRender = renderer.render.bind(renderer);
+
+        renderer.render = function (sceneObj, camObj) {
+          if (stereoSplitActive && !(renderer.xr && renderer.xr.isPresenting) && camObj) {
+            sceneObj.updateMatrixWorld();
+            if (camObj.parent === null) camObj.updateMatrixWorld();
+
+            stereoCamera.update(camObj);
+
+            // Three.js StereoCamera.update() leaves matrixWorldInverse identity because matrixAutoUpdate is false.
+            // Invert the world matrices and projection matrices so camera orientation and frustum track properly:
+            stereoCamera.cameraL.matrixWorldInverse.copy(stereoCamera.cameraL.matrixWorld).invert();
+            stereoCamera.cameraR.matrixWorldInverse.copy(stereoCamera.cameraR.matrixWorld).invert();
+            if (stereoCamera.cameraL.projectionMatrixInverse) {
+              stereoCamera.cameraL.projectionMatrixInverse.copy(stereoCamera.cameraL.projectionMatrix).invert();
+            }
+            if (stereoCamera.cameraR.projectionMatrixInverse) {
+              stereoCamera.cameraR.projectionMatrixInverse.copy(stereoCamera.cameraR.projectionMatrix).invert();
+            }
+
+            renderer.getSize(rendererSize);
+
+            const halfW = rendererSize.x * 0.5;
+            const fullH = rendererSize.y;
+
+            const prevAutoClear = renderer.autoClear;
+            renderer.autoClear = false;
+            renderer.setScissorTest(true);
+
+            renderer.setViewport(0, 0, rendererSize.x, fullH);
+            renderer.setScissor(0, 0, rendererSize.x, fullH);
+            renderer.clear();
+
+            // Left Eye Square
+            renderer.setViewport(0, 0, halfW, fullH);
+            renderer.setScissor(0, 0, halfW, fullH);
+            origRender(sceneObj, stereoCamera.cameraL);
+
+            // Right Eye Square
+            renderer.setViewport(halfW, 0, halfW, fullH);
+            renderer.setScissor(halfW, 0, halfW, fullH);
+            origRender(sceneObj, stereoCamera.cameraR);
+
+            renderer.setScissorTest(false);
+            renderer.setViewport(0, 0, rendererSize.x, fullH);
+            renderer.autoClear = prevAutoClear;
+          } else {
+            origRender(sceneObj, camObj);
+          }
+        };
+      }
+
+      function enterStereoVR() {
+        setupStereoRenderer();
+        stereoSplitActive = true;
+        document.body.classList.add("stereo-vr-active");
+        window.dispatchEvent(new Event("resize"));
+      }
+
+      let isExitingVR = false;
+      function exitStereoVR() {
+        if (isExitingVR) return;
+        isExitingVR = true;
+
+        try {
+          stereoSplitActive = false;
+          document.body.classList.remove("stereo-vr-active");
+
+          const sceneEl = document.querySelector("a-scene");
+          if (sceneEl && sceneEl.is && sceneEl.is("vr-mode") && sceneEl.exitVR) {
+            sceneEl.exitVR();
+          }
+
+          toggleFullscreen(false);
+
+          if (screen.orientation && screen.orientation.unlock) {
+            try { screen.orientation.unlock(); } catch (e) {}
+          }
+
+          experienceStarted = false;
+
+          const startOverlay = document.querySelector("#start-overlay");
+          if (startOverlay) {
+            startOverlay.classList.remove("hidden");
+          }
+
+          window.dispatchEvent(new Event("resize"));
+        } finally {
+          isExitingVR = false;
+        }
+      }
+
+      function launchVR(isAutoLaunch = false) {
+        if (!isAutoLaunch) {
+          requestDeviceSensors();
+        }
+
+        const startOverlay = document.querySelector("#start-overlay");
+        if (startOverlay) startOverlay.classList.add("hidden");
+
+        if (!isAutoLaunch) {
+          toggleFullscreen(true);
+          if (screen.orientation && screen.orientation.lock) {
+            try { screen.orientation.lock("landscape").catch(() => {}); } catch (e) {}
+          }
+        }
+
+        const sceneEl = document.querySelector("a-scene");
+
+        if (!sceneEl || !sceneEl.hasLoaded) {
+          showFsToast("🥽 Loading VR Experience...");
+          if (sceneEl) {
+            sceneEl.addEventListener("loaded", () => launchVR(isAutoLaunch), { once: true });
+          }
+          return;
+        }
+
+        if (isImmersiveVRSupported && sceneEl && sceneEl.enterVR && !isAutoLaunch) {
+          try {
+            sceneEl.enterVR();
+          } catch (err) {
+            console.warn("Native WebXR enterVR error, falling back to stereo split:", err);
+          }
+        }
+
+        enterStereoVR();
+
+        experienceStarted = true;
+        handleScreenFocus(0);
+      }
+
+      // Camera Rotation Helper
+      const pressedArrowKeys = new Set();
+
+      function rotateCamera(deltaYawDeg, deltaPitchDeg) {
+        const cameraEl = document.querySelector("#main-camera");
+        if (!cameraEl) return;
+        const degToRad = Math.PI / 180;
+        const maxPitchRad = 80 * degToRad;
+        const lookControls = cameraEl.components && cameraEl.components["look-controls"];
+
+        if (lookControls && lookControls.yawObject && lookControls.pitchObject) {
+          lookControls.yawObject.rotation.y += deltaYawDeg * degToRad;
+          lookControls.pitchObject.rotation.x = Math.max(
+            -maxPitchRad,
+            Math.min(maxPitchRad, lookControls.pitchObject.rotation.x + deltaPitchDeg * degToRad)
+          );
+        } else if (cameraEl.object3D) {
+          cameraEl.object3D.rotation.y += deltaYawDeg * degToRad;
+          cameraEl.object3D.rotation.x = Math.max(
+            -maxPitchRad,
+            Math.min(maxPitchRad, cameraEl.object3D.rotation.x + deltaPitchDeg * degToRad)
+          );
+        }
+      }
+
+      // Mobile Touch Drag Pan Handler
+      function setupMobileTouchControls() {
+        let isTouching = false;
+        let lastX = 0;
+        let lastY = 0;
+
+        window.addEventListener("touchstart", (e) => {
+          if (
+            e.target.closest("#start-overlay") ||
+            e.target.closest("#ssl-notice") ||
+            e.target.closest("#restart-modal") ||
+            e.target.closest("#inspect-modal") ||
+            e.target.closest("#hud-bottom-dock") ||
+            e.target.closest("#focus-info-card") ||
+            e.target.closest("#hud-toolbar") ||
+            e.target.closest("#leshya-offline-container") ||
+            e.target.closest(".fs-toggle-btn") ||
+            e.target.closest(".hud-dot-pill")
+          ) return;
+          if (e.touches.length === 1) {
+            isTouching = true;
+            lastX = e.touches[0].clientX;
+            lastY = e.touches[0].clientY;
+          }
+        }, { passive: true });
+
+        window.addEventListener("touchmove", (e) => {
+          if (!isTouching || e.touches.length !== 1) return;
+          const currentX = e.touches[0].clientX;
+          const currentY = e.touches[0].clientY;
+          const dx = currentX - lastX;
+          const dy = currentY - lastY;
+          lastX = currentX;
+          lastY = currentY;
+
+          const cameraEl = document.querySelector("#main-camera");
+          const lookControls = cameraEl && cameraEl.components && cameraEl.components["look-controls"];
+          if (!lookControls || !lookControls.data.touchEnabled) {
+            const sensitivity = 0.25;
+            rotateCamera(-dx * sensitivity, dy * sensitivity);
+          }
+        }, { passive: true });
+
+        window.addEventListener("touchend", () => {
+          isTouching = false;
+        }, { passive: true });
+      }
+
+      function updateFullscreenUI(active) {
+        const buttons = document.querySelectorAll("button.fs-toggle-btn");
+        buttons.forEach((btn) => {
+          const enterIcon = btn.querySelector(".fs-icon-enter");
+          const exitIcon = btn.querySelector(".fs-icon-exit");
+          if (active) {
+            btn.classList.add("is-active");
+            btn.setAttribute("title", "Exit Full Screen (F / Esc)");
+            btn.setAttribute("aria-label", "Exit Full Screen");
+            if (enterIcon) enterIcon.classList.add("hidden");
+            if (exitIcon) exitIcon.classList.remove("hidden");
+          } else {
+            btn.classList.remove("is-active");
+            btn.setAttribute("title", "Full Screen (F)");
+            btn.setAttribute("aria-label", "Enter Full Screen");
+            if (enterIcon) enterIcon.classList.remove("hidden");
+            if (exitIcon) exitIcon.classList.add("hidden");
+          }
+        });
+      }
+
+      let isPseudoFullscreen = false;
+      function enablePseudoFullscreen() {
+        isPseudoFullscreen = true;
+        document.documentElement.classList.add("mobile-fullscreen-active");
+        document.body.classList.add("mobile-fullscreen-active");
+
+        try {
+          window.scrollTo({ top: 1, behavior: "smooth" });
+        } catch (e) {
+          try { window.scrollTo(0, 1); } catch (e) {}
+        }
+
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        if (isIOS) {
+          showFsToast("📱 Edge-to-edge active. Rotate phone for panoramic 360°!");
+        } else {
+          showFsToast("Full Screen Mode Active");
+        }
+        updateFullscreenUI(true);
+      }
+
+      function toggleFullscreen(forceState = null) {
+        if (navigator.vibrate) {
+          try { navigator.vibrate(18); } catch (e) {}
+        }
+
+        const currentlyActive = !!(
+          document.fullscreenElement ||
+          document.webkitFullscreenElement ||
+          document.mozFullScreenElement ||
+          document.msFullscreenElement ||
+          isPseudoFullscreen
+        );
+        const shouldBeActive = (forceState !== null) ? !!forceState : !currentlyActive;
+
+        if (!shouldBeActive) {
+          if (document.fullscreenElement || document.webkitFullscreenElement) {
+            try {
+              if (document.exitFullscreen) {
+                document.exitFullscreen().catch(() => {});
+              } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen().catch(() => {});
+              }
+            } catch (err) {
+              console.warn("Exit fullscreen error:", err);
+            }
+          }
+          if (isPseudoFullscreen) {
+            isPseudoFullscreen = false;
+            document.documentElement.classList.remove("mobile-fullscreen-active");
+            document.body.classList.remove("mobile-fullscreen-active");
+            showFsToast("Exited Full Screen");
+            updateFullscreenUI(false);
+          }
+        } else {
+          if (currentlyActive) return;
+
+          let nativeSuccess = false;
+          const docEl = document.documentElement;
+
+          const requestFn =
+            docEl.requestFullscreen ||
+            docEl.webkitRequestFullscreen ||
+            docEl.webkitRequestFullScreen ||
+            docEl.mozRequestFullScreen ||
+            docEl.msRequestFullscreen;
+
+          if (requestFn) {
+            try {
+              const p = requestFn.call(docEl);
+              if (p && p.catch) {
+                p.catch((err) => {
+                  console.warn("Native fullscreen request denied, falling back:", err);
+                  enablePseudoFullscreen();
+                });
+              }
+              nativeSuccess = true;
+              showFsToast("Full Screen Mode (F)");
+            } catch (err) {
+              console.warn("Native fullscreen error, falling back:", err);
+            }
+          }
+
+          if (!nativeSuccess) {
+            enablePseudoFullscreen();
+          }
+        }
+
+        setTimeout(() => window.dispatchEvent(new Event("resize")), 80);
+        setTimeout(() => window.dispatchEvent(new Event("resize")), 280);
+      }
+
+      // Environment: 360 Sky Sphere & Grass Floor
+      function setupGardenEnvironment() {
+        const envContainer = document.querySelector("#garden-environment");
+        const sceneEl = document.querySelector("a-scene");
+        if (!envContainer || !sceneEl) return;
+
+        const group = new THREE.Group();
+
+        // 1. Procedural Daytime Sky Sphere
+        const skyGeo = new THREE.SphereGeometry(85, 48, 32);
+        const skyMat = new THREE.ShaderMaterial({
+          side: THREE.BackSide,
+          depthWrite: false,
+          vertexShader: `
+            varying vec3 vWorldPos;
+            void main() {
+              vWorldPos = position;
+              gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+          `,
+          fragmentShader: `
+            varying vec3 vWorldPos;
+            void main() {
+              float h = normalize(vWorldPos).y;
+              vec3 zenith = vec3(0.38, 0.65, 0.92); // Crisp sky blue
+              vec3 horizon = vec3(0.85, 0.92, 0.98); // Luminous horizon
+              vec3 ground = vec3(0.42, 0.46, 0.16); // Olive meadow grass
+              vec3 col = (h > 0.0) ? mix(horizon, zenith, pow(h, 0.65)) : mix(horizon, ground, pow(-h, 0.4));
+              gl_FragColor = vec4(col, 1.0);
+            }
+          `
+        });
+        const skyMesh = new THREE.Mesh(skyGeo, skyMat);
+        group.add(skyMesh);
+
+        // 2. Ground Meadow Disc
+        const groundGeo = new THREE.CircleGeometry(45, 64);
+        groundGeo.rotateX(-Math.PI / 2);
+        const groundMat = new THREE.MeshBasicMaterial({
+          color: 0x6e772b,
+          side: THREE.FrontSide
+        });
+        const groundMesh = new THREE.Mesh(groundGeo, groundMat);
+        groundMesh.position.y = -0.02;
+        group.add(groundMesh);
+
+        envContainer.setObject3D("mesh", group);
+      }
+
+      // Event Listeners
+      let eventsBound = false;
+      function bindEvents() {
+        if (eventsBound) return;
+        eventsBound = true;
+
+        const startOverlay = document.querySelector("#start-overlay");
+        const startGalleryBtn = document.querySelector("#start-gallery-btn") || document.querySelector("#anger-360-btn");
+        const startVrBtn = document.querySelector("#start-vr-btn") || document.querySelector("#anger-vr-btn");
+        const hungerVrBtn = document.querySelector("#hunger-vr-btn");
+        const hunger360Btn = document.querySelector("#hunger-360-btn");
+        const layoutBtn = document.querySelector("#layout-toggle-btn");
+        const badgeModeBtn = document.querySelector("#badge-mode-btn");
+        const inspectBtn = document.querySelector("#inspect-trigger-btn");
+        const modalCloseBtn = document.querySelector("#modal-close-btn");
+        const modalPrevBtn = document.querySelector("#modal-prev-btn");
+        const modalNextBtn = document.querySelector("#modal-next-btn");
+
+        const enterExperience = async () => {
+          requestDeviceSensors();
+          if (startOverlay) startOverlay.classList.add("hidden");
+          const sceneEl = document.querySelector("a-scene");
+          if (!sceneEl || !sceneEl.hasLoaded) {
+            showFsToast("🎬 Loading 360 Gallery...");
+            if (sceneEl) {
+              sceneEl.addEventListener("loaded", () => {
+                experienceStarted = true;
+                handleScreenFocus(0);
+              }, { once: true });
+            }
+          } else {
+            experienceStarted = true;
+            handleScreenFocus(0);
+          }
+        };
+
+        if (startGalleryBtn) {
+          startGalleryBtn.addEventListener("click", enterExperience);
+        }
+
+        if (startVrBtn) {
+          startVrBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            launchVR();
+          });
+        }
+
+        if (hungerVrBtn) {
+          hungerVrBtn.addEventListener("click", () => {
+            window.location.href = "./index.html?mode=vr";
+          });
+        }
+
+        // Auto-launch via URL parameter if requested (?mode=360 or ?mode=vr)
+        try {
+          const urlParams = new URLSearchParams(window.location.search);
+          const autoMode = urlParams.get("mode");
+          if (autoMode === "360") {
+            const onReady = () => {
+              const sceneEl = document.querySelector("a-scene");
+              if (sceneEl && sceneEl.hasLoaded) enterExperience();
+              else if (sceneEl) sceneEl.addEventListener("loaded", enterExperience, { once: true });
+            };
+            setTimeout(onReady, 50);
+          } else if (autoMode === "vr") {
+            const onReady = () => {
+              const sceneEl = document.querySelector("a-scene");
+              if (sceneEl && sceneEl.hasLoaded) launchVR(true);
+              else if (sceneEl) sceneEl.addEventListener("loaded", () => launchVR(true), { once: true });
+            };
+            setTimeout(onReady, 50);
+          }
+        } catch (e) {
+          console.warn("URL parameter check:", e);
+        }
+
+        // Fullscreen Toggle Buttons
+        document.querySelectorAll("button.fs-toggle-btn").forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            toggleFullscreen();
+          });
+        });
+
+        document.addEventListener("fullscreenchange", () => updateFullscreenUI(!!document.fullscreenElement));
+        document.addEventListener("webkitfullscreenchange", () => updateFullscreenUI(!!document.webkitFullscreenElement));
+
+        // Stereo Overlay Buttons (for Dual-Eye Mobile VR Mode)
+        document.querySelector("#stereo-mute-btn")?.addEventListener("click", () => {
+          playHarmonicChime(focusedScreenIndex);
+        });
+        document.querySelector("#exit-stereo-btn")?.addEventListener("click", exitStereoVR);
+
+        if (layoutBtn) {
+          layoutBtn.addEventListener("click", toggleLayout);
+        }
+
+        if (badgeModeBtn) {
+          badgeModeBtn.addEventListener("click", () => {
+            if (badgeTextMode === "BOTH") badgeTextMode = "HINDI";
+            else if (badgeTextMode === "HINDI") badgeTextMode = "ENGLISH";
+            else badgeTextMode = "BOTH";
+
+            const label = document.querySelector("#badge-mode-label");
+            if (label) {
+              label.textContent = `Name: ${badgeTextMode.charAt(0) + badgeTextMode.slice(1).toLowerCase()}`;
+            }
+            updateAllBadgeTextures();
+          });
+        }
+
+        if (inspectBtn) {
+          inspectBtn.addEventListener("click", () => {
+            openInspectModal(focusedScreenIndex);
+          });
+        }
+
+        // Bottom Viewport Action Buttons (Restart Experience & Switch to Hunger VR)
+        const restartBtn = document.querySelector("#hud-bottom-restart-btn");
+        if (restartBtn) {
+          restartBtn.addEventListener("click", () => handleRestartExperience("hud"));
+        }
+        const switchBtn = document.querySelector("#hud-bottom-switch-btn");
+        if (switchBtn) {
+          switchBtn.addEventListener("click", () => handleSwitchToOtherVR("hud"));
+        }
+
+        const restartModalClose = document.querySelector("#restart-modal-close");
+        if (restartModalClose) {
+          restartModalClose.addEventListener("click", closeRestartModal);
+        }
+
+        const selectHungerBtn = document.querySelector("#btn-select-hunger");
+        if (selectHungerBtn) {
+          selectHungerBtn.addEventListener("click", () => selectStory("hunger"));
+        }
+
+        const selectAngerBtn = document.querySelector("#btn-select-anger");
+        if (selectAngerBtn) {
+          selectAngerBtn.addEventListener("click", () => selectStory("anger"));
+        }
+
+        const restartModalBackdrop = document.querySelector("#restart-modal");
+        if (restartModalBackdrop) {
+          restartModalBackdrop.addEventListener("click", (e) => {
+            if (e.target === restartModalBackdrop) {
+              closeRestartModal();
+            }
+          });
+        }
+
+        const inspectModalEl = document.querySelector("#inspect-modal");
+        if (inspectModalEl) {
+          inspectModalEl.addEventListener("click", (e) => {
+            if (e.target === inspectModalEl) {
+              closeInspectModal();
+            }
+          });
+        }
+
+        if (modalCloseBtn) {
+          modalCloseBtn.addEventListener("click", closeInspectModal);
+        }
+        if (modalPrevBtn) {
+          modalPrevBtn.addEventListener("click", () => nextModalImage(-1));
+        }
+        if (modalNextBtn) {
+          modalNextBtn.addEventListener("click", () => nextModalImage(1));
+        }
+
+        // Keyboard Shortcuts
+        window.addEventListener("keydown", (e) => {
+          const key = e.key.toLowerCase();
+          if (isRestartModalOpen && (key === "escape" || e.key === "Escape")) {
+            e.preventDefault();
+            closeRestartModal();
+            return;
+          }
+          if (document.querySelector("#inspect-modal.active") && (key === "escape" || e.key === "Escape")) {
+            e.preventDefault();
+            closeInspectModal();
+            return;
+          }
+
+          if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) {
+            e.preventDefault();
+            pressedArrowKeys.add(e.key);
+            return;
+          }
+
+          if (key === "escape") {
+            if (stereoSplitActive) {
+              exitStereoVR();
+            } else {
+              closeRestartModal();
+              closeInspectModal();
+            }
+            return;
+          }
+          if (key === "r") {
+            openRestartModal();
+            return;
+          }
+          if (key === "l") {
+            toggleLayout();
+          } else if (key === "t") {
+            if (badgeModeBtn) badgeModeBtn.click();
+          } else if (key === "f") {
+            e.preventDefault();
+            toggleFullscreen();
+          } else if (key === "v") {
+            if (stereoSplitActive) {
+              exitStereoVR();
+            } else {
+              launchVR();
+            }
+          } else if (key === " " || e.code === "Space") {
+            e.preventDefault();
+            openInspectModal(focusedScreenIndex);
+          } else if (e.key >= "1" && e.key <= "6") {
+            const idx = parseInt(e.key, 10) - 1;
+            rotateCameraToScreen(idx);
+          }
+        });
+
+        window.addEventListener("keyup", (e) => {
+          if (pressedArrowKeys.has(e.key)) {
+            pressedArrowKeys.delete(e.key);
+          }
+        });
+
+        window.addEventListener("blur", () => {
+          pressedArrowKeys.clear();
+        });
+
+        // Mobile Orientation Change Cooldown
+        window.addEventListener("orientationchange", () => {
+          orientationCooldownUntil = performance.now() + 2000;
+          if (nadirDwellState.active || nadirDwellState.triggered) {
+            nadirDwellState.active = false;
+            nadirDwellState.triggered = false;
+            nadirDwellState.lastProgress = 0;
+            drawNadirCanvas(0.0, false, null);
+          }
+          window.dispatchEvent(new Event("resize"));
+        });
+      }
+
+      // Initialize Application
+      function init() {
+        checkSecureContext();
+        setupTextures();
+        setupStereoRenderer();
+        setupMobileTouchControls();
+        initScreens();
+        initNadirRestartPortal();
+        setupGardenEnvironment();
+        bindEvents();
+        requestAnimationFrame(tick);
+      }
+
+      const sceneEl = document.querySelector("a-scene");
+      if (sceneEl.hasLoaded) {
+        init();
+      } else {
+        sceneEl.addEventListener("loaded", init, { once: true });
+      }
+
+      // Eagerly bind DOM UI events immediately so button clicks work without waiting for 3D scene load!
+      bindEvents();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+{
+  "name": "6 Leshya VR Theater & Gallery",
+  "short_name": "Leshya VR",
+  "description": "Synchronized 6-View 360° VR Theater & Comic Gallery with 100% Offline Support",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#030712",
+  "theme_color": "#030712",
+  "categories": ["entertainment", "education"],
+  "icons": [
+    {
+      "src": "./dot-logo.png",
+      "sizes": "192x192 512x512 1024x1024",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./jainific-logo.png",
+      "sizes": "192x192 512x512 1024x1024",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

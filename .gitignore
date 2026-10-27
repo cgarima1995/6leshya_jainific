@@ -1,0 +1,17 @@
+# Security & Private Keys
+cert.pem
+key.pem
+
+# macOS metadata
+.DS_Store
+
+# Local Python Server
+server.py
+run.sh
+
+# Redundant backup media
+videos/old/
+
+# Temporary files
+temp_*
+*.wav

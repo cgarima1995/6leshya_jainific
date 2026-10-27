@@ -1,0 +1,7 @@
+/*
+  Access-Control-Allow-Origin: *
+  Accept-Ranges: bytes
+
+/sw.js
+  Service-Worker-Allowed: /
+  Cache-Control: no-cache, no-store, must-revalidate
