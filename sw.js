@@ -3,7 +3,7 @@
  * Provides resilient offline caching and HTTP 206 Partial Content synthesis for video playback.
  */
 
-const CACHE_NAME = 'leshya-vr-cache-v4';
+const CACHE_NAME = 'leshya-vr-cache-v5';
 
 const CORE_ASSETS = [
   './',
@@ -63,6 +63,30 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Network-first strategy for HTML navigation requests to guarantee latest script updates
+  const isHtml = request.mode === 'navigate' ||
+                 url.pathname.endsWith('.html') ||
+                 url.pathname === '/' ||
+                 url.pathname.endsWith('/');
+
+  if (isHtml) {
+    event.respondWith(
+      fetch(request).then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
+          const clone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+        }
+        return networkResponse;
+      }).catch(() => {
+        return caches.match(request).then((cached) => {
+          if (cached) return cached;
+          return caches.match('./images.html').then((imgCached) => imgCached || caches.match('./index.html'));
+        });
+      })
+    );
+    return;
+  }
+
   // Standard cache-first strategy for static resources
   event.respondWith(
     caches.match(request).then((cachedResponse) => {
@@ -77,11 +101,6 @@ self.addEventListener('fetch', (event) => {
           });
         }
         return networkResponse;
-      }).catch(() => {
-        // Fallback for HTML navigation when completely offline
-        if (request.mode === 'navigate') {
-          return caches.match('./index.html');
-        }
       });
     })
   );

@@ -95,7 +95,7 @@ An immersive WebXR art gallery displaying the 6 high-resolution comic illustrati
 - **1:1 Square Curved Screens:** Mapped precisely for 1755×1755 comic strips with edge-to-edge curved cylindrical geometry.
 - **🏷️ Floating 3D Title Badges on Top:** Just like in the video VR theater, floating 3D curved badges are positioned directly above each image in VR with the exact Leshya background color, glowing borders, and Devanagari Hindi title (`1. शुक्ल लेश्या`, `2. पद्म लेश्या`, etc.) plus English subtitle toggle (`T` key or HUD button).
 - **Interactive Lightbox Inspection:** Click any panel or press `Space` to inspect the comic dialogue up close with previous/next navigation.
-- **Harmonic Audio Chimes:** Procedural Web Audio frequencies tuned to each soul aura (from Shukla 880Hz down to Krishna 110Hz).
+- **Continuous Repeating Audio Narration:** High-quality voice narration (`audioIntro1.mp4`) that plays completely from beginning to end and seamlessly repeats, without changing or restarting across different images.
 - **Full WebXR & Mobile Support:** WebXR Headsets (Quest, Pico, Vision Pro), Mobile Gyroscope Magic Window, Touch Swipe, and Google Cardboard split-screen.
 
 ---

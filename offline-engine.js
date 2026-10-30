@@ -198,6 +198,7 @@
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./sw.js').then((reg) => {
         console.log('[OfflineEngine] SW registered with scope:', reg.scope);
+        reg.update().catch(() => {});
       }).catch((e) => {
         console.warn('[OfflineEngine] SW registration error:', e);
       });
