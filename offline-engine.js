@@ -30,6 +30,7 @@
     { id: 'img5', type: 'image', index: 5, url: './images/5.png', label: '5. Neel Comic Image' },
     { id: 'img6', type: 'image', index: 6, url: './images/6.png', label: '6. Krishna Comic Image' },
     { id: 'audio-intro1', type: 'audio', index: 1, url: './audioIntro1.mp4', label: 'Anger Analogy Voice Narration' },
+    { id: 'audio-intro2', type: 'audio', index: 3, url: './audioIntro2.mp4', label: 'Hunger Analogy Voice Narration' },
     { id: 'audio-soothing', type: 'audio', index: 2, url: './soothingMusic.mp4', label: 'Soothing Background Music' }
   ];
 

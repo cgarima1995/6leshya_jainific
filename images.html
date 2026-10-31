@@ -4472,7 +4472,7 @@
         }
 
         // Fullscreen Toggle Buttons
-        document.querySelectorAll("button.fs-toggle-btn").forEach((btn) => {
+        document.querySelectorAll("button.fs-toggle-btn:not(#hud-audio-btn)").forEach((btn) => {
           btn.addEventListener("click", (e) => {
             e.stopPropagation();
             toggleFullscreen();

@@ -3,7 +3,7 @@
  * Provides resilient offline caching and HTTP 206 Partial Content synthesis for video playback.
  */
 
-const CACHE_NAME = 'leshya-vr-cache-v5';
+const CACHE_NAME = 'leshya-vr-cache-v6';
 
 const CORE_ASSETS = [
   './',
@@ -16,6 +16,7 @@ const CORE_ASSETS = [
   './jainific-logo.png',
   './manifest.json',
   './audioIntro1.mp4',
+  './audioIntro2.mp4',
   './soothingMusic.mp4'
 ];
 

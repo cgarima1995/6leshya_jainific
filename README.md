@@ -60,7 +60,7 @@ python3 server.py
 - **6 Adjacent Synchronized Video Views:** Plays 6 video views in edge-to-edge alignment.
 - **🏷️ Floating 3D Title Badges on Every Screen:** Prominently displays the screen number and title (e.g. `1. Shukla Leshya`, `2. Padma Leshya`, ..., `6. Krishna Leshya`) directly above each video screen in VR with high-contrast glassmorphism backplates, luminous Leshya accent borders, Hindi names, and active focus/playback indicators.
 - **Switchable Layouts:** 360° Surround Ring (hexagonal cylinder) and 180° Curved Panoramic Arc.
-- **Smart Gaze-Focused Spatial Audio:** Dynamically focuses audio on the screen you are facing, while keeping background screens subtle.
+- **Continuous Master Voice Narration (`audioIntro2.mp4`) & Pleasant Soothing BGM (`soothingMusic.mp4`):** Features clear, high-fidelity storytelling narration for the Tree Parable accompanied by soft, ambient meditation background music that loops seamlessly across the experience while keeping the individual video audio tracks muted.
 - **✨ 3D Volumetric Leshya Aura Emission:** When viewing any video screen, the unique spiritual color energy of that Leshya physically emerges from the curved screen and flows outward into 3D space toward the viewer:
   - ⚪ **Shukla:** Radiant celestial diamond stardust and pure crystalline sparks.
   - 🟡 **Padma:** Luminous golden-amber lotus nectar and floating compassion pollen.
